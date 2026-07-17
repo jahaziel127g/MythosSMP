@@ -1,0 +1,6 @@
+database:
+  path: "plugins/MythosSMP/mythos_smp.db"
+  pool-size: 4
+  max-backups: 5
+
+debug: false

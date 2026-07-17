@@ -1,0 +1,445 @@
+﻿MYTHOS SMP
+Software Architecture & Detailed Implementation Plan
+A Production-Grade Kotlin/Paper 1.21.1+ Plugin Specification
+Document Version: 1.0.0
+Date: July 16, 2026
+Target Environment: Paper 1.21.1 (Build #118+)
+________________
+
+
+1. Executive Summary & Design Philosophy
+Mythos SMP is a revolutionary, custom Minecraft Paper Server experience modeled around mythological archetypes and risk-reward player dynamics. Unlike standard survival multiplayer systems where progression is vertical, static, and safe (e.g., leveling up skills or unlocking permanent perks), Mythos SMP introduces horizontal, high-stakes progression governed by the Vow System. To attain divine power, players must subject themselves to a public, highly dangerous trial that broadcasts their vulnerability to rival factions in real-time, sparking emergent PvP conflicts, dynamic defensive alliances, and strategic betrayals.
+The Core Gameplay Loop & Progression Economics
+The server economics and player retention loop are designed to prevent late-game stagnation by introducing complete asset-and-ability loss on death. This establishes a fluid, dynamic distribution of power across the player base. The logical flow operates as a cycle of acquisition, defense, and strategic loss:
+THE CYCLICAL PROGRESSION ENGINE
+1. Resource Influx: Gather rare elements (Netherite, Heart of the Sea, etc.) to craft Vow-specific scrolls.
+2. Location Decryption: Extract physical coordinate rules from the scroll to locate ancient Trial Grounds.
+3. Trial Initiation & Public Beacon: Trigger the trial. The plugin broadcasts the player's coordinates server-wide.
+4. Survival Under Siege: Defend against 10 minutes of compounding waves of hyper-customized Mythos monsters.
+5. Divine Bestowal: Secure the Vow. Enjoy permanent passives and raw active abilities, governed by a harsh Curse.
+6. High-Stakes Hegemony: Dominate standard PvP/PvE, build trusted groups, or bind souls via the Seal of Union.
+7. Complete Power Transfer: On death, the active power is ripped from the player. It drops as an Expired Vow Book. Rivals must successfully undergo the same trials to claim the divine abilities, initiating the cycle anew.
+	
+
+Design Psychology & Player Interactions
+The design psychology focuses heavily on human-to-human dynamic structures. Traditional SMPs fail because power accumulates linearly until a single faction dominates without competition. Mythos SMP breaks this bottleneck in three ways:
+* The Vulnerability of Ascendancy: Because trial coordinate broadcasts expose players, a player seeking Zeus's power cannot do it secretly. They are vulnerable. Their allies must form defensive phalanxes to block rival raiders.
+* The trust Framework: The '/trust' command creates structural party groupings. Friendly fire from chaotic high-radius AOE abilities (like Zeus's Thundercrash or Hades's Call of the Reaper) is blocked for trusted members, allowing coordinate battles to be organized and tactical rather than purely chaotic.
+* The Seal of Union (Double-Edged Alliances): By physically linking two players' divine status, the Seal of Union establishes heavy mutual protection. If one dies, both lose their powers. This prevents a single 'super-soldier' meta and forces players to defend their weaker, utility-based partners (e.g., Plutus or Hermes users).
+2. System Architecture & Tech Stack
+Mythos SMP is constructed on a decoupled, asynchronous, service-oriented architecture designed to minimize main-thread impact on Paper 1.21.1+ servers. Below is the blueprint of the tech stack and system structure:
+Layer
+	Technology / Framework
+	Design Utility
+	Core Language
+	Kotlin 1.9.22+
+	Leverages high-level idiomatic patterns, null-safety, coroutines, and delegation.
+	Server API
+	Paper 1.21.1-R0.1-SNAPSHOT
+	Accesses modern, performant execution pipelines and entity-tracking optimizations.
+	Build System
+	Gradle (Kotlin DSL)
+	Manages shadow-shading, dependency minimization, and automatic build checks.
+	Messaging UI
+	Adventure API (MiniMessage)
+	Ensures robust, native, cross-platform component styling and text rendering.
+	Asynchrony
+	Kotlin Coroutines (MCTowns/Dispatcher)
+	Offloads heavy database, configuration, and structural calculations from the tick-loop.
+	Database Layer
+	SQLite + HikariCP
+	Fast, structured, transactional storage with pool management and automated backups.
+	Persistent Data
+	PersistentDataContainer (PDC)
+	Natively tracks metadata (Vow ID, binding key, owner UUID) inside native ItemStacks and Entity states.
+	
+
+Decoupled Architectural Overview
+The codebase utilizes a modern architectural standard separating UI/Event handling, business logic execution, and data access layers. No direct SQL queries occur within event listeners, and no Minecraft API objects (like Player or World) are stored long-term in memory to prevent severe memory leaks.
+MYTHOS EXTENSIBLE PIPELINE GRAPH
+[Bukkit Event/Command Listener]
+     ↓ (Captures event, validates input, acts on main thread)
+[Custom Event Bridge] (Triggers VowUnlockEvent, VowLossEvent, TrialStartEvent)
+     ↓ (Decoupled execution via services)
+[Service Layer] (AbilityManager, TrialManager, SealOfUnionManager)
+     ↓ (Launches non-blocking task on DB dispatcher)
+[Data Repository] (PlayerDataManager / DatabaseManager) 
+     ↓ (Atomic transaction execution)
+[SQLite Persistence]
+	
+
+3. Database Schema & Data Modeling
+To ensure persistent data consistency across unexpected server crashes, a standardized SQL schema is maintained. The database setup includes tables for players, active vows, player trusts, and mutual unions. Below are the production-grade SQLite/MySQL-ready schemas:
+-- Core Players Table
+CREATE TABLE IF NOT EXISTS mythos_players (
+   player_uuid VARCHAR(36) PRIMARY KEY NOT NULL,
+   last_known_name VARCHAR(16) NOT NULL,
+   active_vow VARCHAR(32) DEFAULT NULL,
+   cooldown_multiplier REAL DEFAULT 1.0,
+   last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Trust Relations Table (Bi-directional relational index)
+CREATE TABLE IF NOT EXISTS mythos_trusts (
+   player_uuid VARCHAR(36) NOT NULL,
+   trusted_uuid VARCHAR(36) NOT NULL,
+   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+   PRIMARY KEY (player_uuid, trusted_uuid),
+   FOREIGN KEY (player_uuid) REFERENCES mythos_players(player_uuid) ON DELETE CASCADE
+);
+
+-- Active Seal of Union Table
+CREATE TABLE IF NOT EXISTS mythos_unions (
+   union_id VARCHAR(36) PRIMARY KEY NOT NULL,
+   party_a_uuid VARCHAR(36) NOT NULL UNIQUE,
+   party_b_uuid VARCHAR(36) NOT NULL UNIQUE,
+   creation_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+   FOREIGN KEY (party_a_uuid) REFERENCES mythos_players(player_uuid) ON DELETE CASCADE,
+   FOREIGN KEY (party_b_uuid) REFERENCES mythos_players(player_uuid) ON DELETE CASCADE
+);
+
+-- Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_trust_player ON mythos_trusts(player_uuid);
+CREATE INDEX IF NOT EXISTS idx_unions_lookup ON mythos_unions(party_a_uuid, party_b_uuid);
+	
+
+Data Caching & Main-Thread Safeguards
+Direct SQL operations take between 1ms and 50ms depending on hardware load, which equates to a loss of 1 to 3 TPS on a production server if done synchronously. To bypass this, the PlayerDataManager maintains an in-memory concurrent map of PlayerProfile objects. Data is fetched and cached instantly on AsyncPlayerPreLoginEvent, making it fully ready when PlayerJoinEvent occurs. All writes, modifications, and background savings are executed asynchronously via a custom Coroutine Dispatcher backed by a single-threaded execution context to prevent SQLite thread contention.
+4. Component Technical Specifications
+4.1 PlayerDataManager
+Responsible for handling memory caching and DB interactions. It maps UUIDs to internal PlayerProfile records. If a profile is modified, a dirty flag is set, and the profile is queued for the async database writer. On server shutdown, the manager blocks and flushes all dirty profiles to prevent data loss.
+4.2 VowRegistry
+A central registry containing registration references for all available Vows. On startup, the plugin initializes and registers all 12 Vows using a map: Map<String, Vow>. This architecture allows high extensibility, enabling third-party developers or future updates to inject custom Vows via a simple registration API. Every custom Vow class implements a base interface featuring methods for handling passives, curses, and initializations.
+4.3 AbilityManager & CooldownManager
+The AbilityManager intercepts /ability1 and /ability2 commands or custom keybind interact actions. It queries the player's active Vow, verifies that the user possesses the correct permission node, and delegates execution to the registered Vow ability object. Before execution, the CooldownManager checks the cooldown map (Map<UUID, Map<String, Instant>>). If an ability is on cooldown, it calculated the remaining time and dispatches a formatted Action Bar countdown via Adventure, avoiding chat spam. Cooldown states are stored as Instants in memory, ensuring they are independent of server ticks and perfectly resilient.
+4.4 TrialManager
+A critical engine implementing a robust state machine per trial. Each active trial instance is tracked by a TrialSession class containing state, time remaining, trial center, and custom active entity tracking list. The manager acts upon a 20-tick global scheduler, handling:
+* Wave Spawning: Triggers wave transitions every 60 seconds, scaling monster attributes, armor, and traits exponentially.
+* Boundary Management: Triggers immediate disqualification if the participant crosses the designated trial arena boundaries.
+* Broadcast System: Flashes server-wide coordinates, updating active coordinates on boss-bars to invite PvP interference.
+4.5 TrustManager & SealOfUnionManager
+The TrustManager controls relational structures, returning true or false checks when checking targeting conditions within AOE calculations. The SealOfUnionManager handles high-stakes linking. When a player dies, the death event handler alerts the SealOfUnionManager. The system verifies if the victim is bound, immediately locates the surviving partner's UUID, strips their Vow, notifies them via a chilling screen title, and cleanly terminates the database row. This cascading logic is fully atomic.
+________________
+
+
+5. Deep Dive: The 12 Divine Vows
+Below is the comprehensive technical breakdown of all 12 Vows, including precise mechanics, combat variables, targeting calculations, and ready-to-use production YAML configurations.
+Vow of Ares — God of War
+Strategic Role: Vanguard Berserker / Low-Health DPS Specialist
+Passive Ability: Infinite Strength I status effect. Dynamic Rage Meter: Charges by 1% for every 1 HP of physical damage dealt to other entities, and 2% for every 1 HP of damage received. Increases generic physical attack damage output linearly up to an additional +50% at 100% Rage.
+Active Ability 1 (/ability1): Bloodthorns: For a configured duration (default: 15s), the user enters an state where every 10% of health lost increases generic output damage by an additional 5%. Additionally, grants 1-time lethal damage mitigation, freezing health at 0.5 hearts for 3 seconds instead of dying. Once this 3-second safety window ends, standard death triggers normally.
+Active Ability 2 (/ability2): Rage Aura: Can only be cast at 100% Rage. Consumes 100% Rage to emit an expanding shockwave (8-block radius) of red dust particles, dealing 12 damage to all untrusted entities caught in the shockwave. Instantly breaks shields of affected targets.
+Divine Curse: War Hunger: Food saturation replenishment effectiveness is reduced by 25%. Hunger depletion rates scale 15% faster during combat.
+# Ares Configuration
+vow-ares:
+ enabled: true
+ passive:
+   strength-amplifier: 0 # Strength I
+   max-rage: 100
+   rage-damage-bonus: 0.5 # Max +50%
+ ability1:
+   duration-seconds: 15
+   cooldown-seconds: 120
+   death-immunity-seconds: 3
+   particle-color: "#FF0000"
+ ability2:
+   radius-blocks: 8.0
+   damage-amount: 12.0
+   shield-break: true
+ curse:
+   saturation-multiplier: 0.75
+   hunger-depletion-multiplier: 1.15
+	
+
+Vow of Plutus — God of Wealth
+Strategic Role: Economic Catalyst / Utility Farmer
+Passive Ability: Permanent Hero of the Village V effect. 30% chance to bypass item consumption when consuming potion bottles, food items, golden apples, or ender pearls.
+Active Ability 1 (/ability1): Merchant's Fortune: For 30 seconds, all broken ores drop exactly double. Stacks multiplicatively with standard Fortune enchantments (e.g., Fortune III + Merchant's Fortune results in 2x final parsed drop count). Leaves a trail of gold dust particles.
+Active Ability 2 (/ability2): Golden Tribute: For 30 seconds, all dynamic merchant trade costs on active villagers are overridden and set to exactly 1 Emerald per transaction, bypassing reputation multipliers.
+Divine Curse: Grave Greed: Hitting or damaging any villager entity permanently triggers 'Greed Penalty', forcing all villagers within a 128-block radius to scale prices by 100% higher for 4 hours.
+# Plutus Configuration
+vow-plutus:
+ enabled: true
+ passive:
+   hero-of-village-level: 4 # Hero of the Village V
+   consume-bypass-chance: 0.30
+ ability1:
+   duration-seconds: 30
+   cooldown-seconds: 180
+ ability2:
+   duration-seconds: 30
+   cooldown-seconds: 300
+ curse:
+   price-increase-multiplier: 2.0
+   penalty-duration-hours: 4
+	
+
+Vow of Zeus — God of Lightning
+Strategic Role: Sustained AOE Mage / Fast Skirmisher
+Passive Ability: Permanent Speed II status effect.
+Active Ability 1 (/ability1): Thunder Strike: For 15 seconds, lightning strikes targets within a 12-block radius every 2 seconds. Prioritizes hostile mobs and untrusted players, dealing 5 true damage and lighting them on fire.
+Active Ability 2 (/ability2): Thundercrash: Instantly dashes the user forward 10 blocks in their looking direction. Upon landing, a massive lightning blast is triggered, dealing 15 damage, destroying blocks (if enabled in config), and applying Stun (Slowness V, Blindness, Jump Boost 128) to untrusted targets for 3 seconds.
+Divine Curse: Earth Grounding: Due to lightning ionization, taking damage while standing below Y=40 (underground) increases all raw incoming damage by an additional 20%.
+# Zeus Configuration
+vow-zeus:
+ enabled: true
+ passive:
+   speed-amplifier: 1 # Speed II
+ ability1:
+   duration-seconds: 15
+   cooldown-seconds: 60
+   radius-blocks: 12.0
+   tick-interval: 40 # 2 seconds
+   strike-damage: 5.0
+ ability2:
+   cooldown-seconds: 150
+   dash-distance: 10.0
+   blast-damage: 15.0
+   stun-duration-ticks: 60
+ curse:
+   underground-damage-modifier: 1.20
+   underground-y-threshold: 40
+	
+
+Vow of Hades — God of Death
+Strategic Role: Lifesteal Fighter / Necromancer
+Passive Ability: Undead Neutrality: All undead entities (Zombies, Skeletons, Withers, Phantoms, Piglins) treat the player as fully neutral. They will not target the player unless damaged directly.
+Active Ability 1 (/ability1): Soul Drain: For 8 seconds, 40% of all physical or projectile damage dealt is instantly converted into raw health points for the player. Emits red/purple helix swirl particles.
+Active Ability 2 (/ability2): Call of the Reaper: Marks a target entity within a 15-block range with a wither skull crown. The marked target takes 25% increased damage from all sources for 12 seconds. Additionally, if they die while marked, the user gains Absorption II for 20 seconds.
+Divine Curse: Aura of the Damned: Villager entities run away in terror if the player approaches within a 10-block radius. Iron Golems will immediately target the user on sight.
+# Hades Configuration
+vow-hades:
+ enabled: true
+ ability1:
+   duration-seconds: 8
+   cooldown-seconds: 90
+   heal-ratio: 0.40
+ ability2:
+   cooldown-seconds: 120
+   range-blocks: 15.0
+   vulnerability-multiplier: 1.25
+   mark-duration-seconds: 12
+ curse:
+   flee-radius-blocks: 10.0
+	
+
+Vow of Hercules — God of Strength
+Strategic Role: Immovable Juggernaut / Tank
+Passive Ability: Permanent Resistance I status effect. 20% flat knockback resistance.
+Active Ability 1 (/ability1): Titan's Slam: Launches the user upward and forward. Upon hitting the ground, creates a 5-block radius shockwave, dealing 8 raw damage and applying heavy upward and backward knockback vectoring to untrusted players.
+Active Ability 2 (/ability2): Unbreakable Will: For 10 seconds, grants 100% absolute knockback immunity and increases armor status to Resistance II. The player is fully immune to slowness, poison, or wither effects for the duration.
+Divine Curse: Colossal Burden: The heavy constitution applies a permanent, unremovable Slowness I status effect to the player.
+# Hercules Configuration
+vow-hercules:
+ enabled: true
+ passive:
+   resistance-amplifier: 0 # Resistance I
+   kb-resistance: 0.20
+ ability1:
+   cooldown-seconds: 45
+   radius-blocks: 5.0
+   slam-damage: 8.0
+ ability2:
+   cooldown-seconds: 180
+   duration-seconds: 10
+   resistance-amplifier: 1 # Resistance II
+ curse:
+   slowness-amplifier: 0 # Slowness I
+	
+
+Vow of Boreas — God of Ice
+Strategic Role: Crowd Control / Zone Controller
+Passive Ability: Permanent Speed II while standing or moving on ice, packed ice, blue ice, or snow blocks. Absolute immunity to freezing damage; can walk directly across powdered snow.
+Active Ability 1 (/ability1): Cold Crush: Passive attack stacker. Every second consecutive hit on an untrusted target within a 5-second window applies dynamic frost stacks. Stack 1: Slowness I (4s). Stack 2: Wind Charge blockage (cannot launch). Stack 3: Absolute Freeze (4s) where target is encased in temporary blue ice, blocking movement entirely.
+Active Ability 2 (/ability2): Blizzard: Summons a swirling frost storm centered on the caster in a 12-block radius for 10 seconds. Sluggish particles fall; all untrusted entities inside have their FOV limited and take 2 physical frost damage per second while being slowed by Slowness III.
+Divine Curse: Thermal Vulnerability: All incoming damage originating from fire, lava, fire aspect weapons, flame bows, or magma blocks is amplified by exactly +50%.
+# Boreas Configuration
+vow-boreas:
+ enabled: true
+ ability1:
+   cooldown-seconds: 20
+   stack-reset-seconds: 5.0
+   freeze-duration-ticks: 80
+ ability2:
+   cooldown-seconds: 120
+   duration-seconds: 10
+   radius-blocks: 12.0
+   damage-per-second: 2.0
+ curse:
+   fire-damage-multiplier: 1.50
+	
+
+Vow of Hephaestus — God of Fire
+Strategic Role: Fire Damage DPS Specialist
+Passive Ability: Permanent Fire Resistance status effect.
+Active Ability 1 (/ability1): Raging Flame: The player's next physical melee attack ignites the target. This unique ignition burns for 8 seconds, dealing 1.5 damage per half-second, and completely ignores the victim's Fire Resistance status, burning them with unique orange-red flame particles.
+Active Ability 2 (/ability2): Eruption Blast: Launches an explosive fire volcanic projectile in the player's facing direction. On contact with any block or entity, it creates a 4-block wide fiery blast, dealing 10 damage and setting the environment on fire.
+Divine Curse: Hydrophobia: Contact with rain, standing water, or water bottles damages the player. Dehydration/boiling causes 2 damage (1 heart) for every 1.5 seconds of exposure.
+# Hephaestus Configuration
+vow-hephaestus:
+ enabled: true
+ ability1:
+   cooldown-seconds: 40
+   burn-duration-seconds: 8
+   burn-damage-per-half-sec: 1.5
+ ability2:
+   cooldown-seconds: 90
+   explosion-damage: 10.0
+   explosion-radius: 4.0
+ curse:
+   water-damage-amount: 2.0
+   water-interval-ticks: 30
+	
+
+Vow of Erebus — God of Darkness
+Strategic Role: Assassination Rogue / Night Stalker
+Passive Ability: Permanent Night Vision. Speed II when the ambient world light level is below 4, or during the world's night cycle (13000 to 23000 ticks).
+Active Ability 1 (/ability1): Shadow Cloak: For 8 seconds, the user is granted absolute true invisibility. All equipped armor items, held items, and active potion particles are fully hidden from rival clients. Mobs completely drop target recognition. Cloak breaks immediately if the player deals direct physical damage.
+Active Ability 2 (/ability2): Dark Veil: Creates a sphere of pitch darkness centered on the player with a 10-block radius. All untrusted players inside the sphere are immediately struck with Blindness III and Slowness II for 8 seconds. Emits dark shadow particles.
+Divine Curse: Photophobia: Sun exposure drains physical stamina. During daytime (1000 to 12000 ticks) while having direct sky access, the player is permanently afflicted with Weakness I.
+# Erebus Configuration
+vow-erebus:
+ enabled: true
+ ability1:
+   duration-seconds: 8
+   cooldown-seconds: 150
+ ability2:
+   radius-blocks: 10.0
+   cooldown-seconds: 130
+   blind-duration-seconds: 8
+ curse:
+   weakness-amplifier: 0 # Weakness I
+	
+
+Vow of Loki — God of Deception
+Strategic Role: Trickster / Infiltration Specialist
+Passive Ability: Backstab Mechanics: Physical attacks hitting targets from behind (angle difference less than 45 degrees between look vectors) deal 2.5x base damage. Permanent Invisibility status; hostiles fail to target the user.
+Active Ability 1 (/ability1): Deceiver: Instantly swaps the location of the user and the last entity they damaged within the past 10 seconds. The swap swaps velocity, creating disorientation. Range of swap: 30 blocks.
+Active Ability 2 (/ability2): Swarm: Spawns 4 dynamic illusionary clones of the player. These clones mirror the player's movements, have identical armor/skins, and randomly swing their items. Clones have 1 HP, deal 0.5 physical damage, and vanish after 12 seconds.
+Divine Curse: Fragility of Deceit: The trickster's physical body is fragile. Max health is permanently capped and reduced by exactly 4 HP (2 full hearts).
+# Loki Configuration
+vow-loki:
+ enabled: true
+ passive:
+   backstab-multiplier: 2.5
+ ability1:
+   cooldown-seconds: 60
+   swap-range-max: 30.0
+ ability2:
+   cooldown-seconds: 180
+   clone-count: 4
+   clone-duration-seconds: 12
+   clone-damage: 0.5
+ curse:
+   health-reduction-amount: 4.0
+	
+
+Vow of Poseidon — God of the Sea
+Strategic Role: Aquatic Gladiator / Ocean Sovereign
+Passive Ability: Dolphin's Grace status effect in water, and water breathing. Negates underwater mining speed penalties.
+Active Ability 1 (/ability1): Wave Crash: Emits a circular wall of water extending outward 8 blocks from the user. All untrusted entities are pushed backward with an acceleration vector, separating enemies in team fights.
+Active Ability 2 (/ability2): Abyssal Blessing: While standing or swimming in water, the player gains permanent Strength I and Regeneration I. Leaving water strips these effects after 3 seconds.
+Divine Curse: Dehydration: The player is bound to the sea. If they fail to touch water, waterlogged blocks, or rain for a continuous duration of 5 minutes, they take 1 damage every 3 seconds until water is touched.
+# Poseidon Configuration
+vow-poseidon:
+ enabled: true
+ ability1:
+   cooldown-seconds: 35
+   radius-blocks: 8.0
+   push-velocity-factor: 1.4
+ ability2:
+   cooldown-seconds: 10
+   strength-amp: 0
+   regen-amp: 0
+ curse:
+   dehydration-limit-minutes: 5
+   damage-amount: 1.0
+   interval-seconds: 3
+	
+
+Vow of Chronos — God of Time
+Strategic Role: Time Manipulator / Duelist
+Passive Ability: Permanent Haste I status effect.
+Active Ability 1 (/ability1): Fast Forward: Compresses local timelines, granting the player a 30% attack speed increase and 20% movement speed increase for 12 seconds.
+Active Ability 2 (/ability2): Rewind: Records the user's positional coordinates, HP, and armor durability states in a rolling queue. On activation, the user is instantly teleported to their exact physical position from 10 seconds ago, restoring their recorded health state.
+Divine Curse: Timeline Lag: Due to temporal distortion, all active ability cooldowns are permanently increased by +25% across the board.
+# Chronos Configuration
+vow-chronos:
+ enabled: true
+ passive:
+   haste-amplifier: 0
+ ability1:
+   cooldown-seconds: 45
+   duration-seconds: 12
+   attack-speed-bonus: 0.30
+   move-speed-bonus: 0.20
+ ability2:
+   cooldown-seconds: 180
+   rewind-seconds-back: 10
+ curse:
+   cooldown-multiplier: 1.25
+	
+
+Vow of Hermes — God of Travel
+Strategic Role: Hyper-Mobility Scout
+Passive Ability: Allows the user to perform a double jump (by double tapping spacebar) once every 15 seconds. Complete immunity to fall damage.
+Active Ability 1 (/ability1): Dash: Instantly launches the player forward 12 blocks in the direction they are facing. Has an extremely short cooldown (6 seconds) to facilitate hyper-mobility.
+Active Ability 2 (/ability2): Zephyr Wing (Hermes ultimate): Spawns wind particle trails around the boots. Grants complete flight capabilities for 8 seconds. If damaged in flight, flight immediately cancels, triggering a 1-second slow fall.
+Divine Curse: Light Constitution: Cannot wear any armor weight class higher than Chainmail or Leather. Attempting to equip Iron, Diamond, or Netherite armor triggers immediate physical rejection, ejecting the armor and causing 4 damage.
+# Hermes Configuration
+vow-hermes:
+ enabled: true
+ passive:
+   double-jump-cooldown-ticks: 300
+ ability1:
+   cooldown-seconds: 6
+   dash-distance: 12.0
+ ability2:
+   cooldown-seconds: 150
+   duration-seconds: 8
+ curse:
+   max-armor-tier: "CHAINMAIL"
+   rejection-damage: 4.0
+	
+
+________________
+
+
+6. Development Roadmap & Milestones
+To execute a stable, feature-complete release, development is segmented into seven disciplined phases. Each phase represents a logical package of work with designated testing criteria:
+Phase 1: Foundation (Weeks 1-2)
+Deliverables: Establish Kotlin + Gradle wrapper, paper API artifacts, and SQLite database schemas. Build core command framework (/vow, /trust), local profile caching mechanisms, and localized testing environments.
+QA Acceptance Benchmarks: Verify zero database write blockages on join/quit, perfect offline player data cache resolutions.
+Phase 2: Core Framework (Weeks 3-4)
+Deliverables: Create abstract classes for Vows, Passives, and Abilities. Implement dynamic active-listener registry maps, cooldown handlers, and custom events. Design and thoroughly QA the Vow of Ares as the foundational test.
+QA Acceptance Benchmarks: Verify correct cooldown updates in action-bars, event-handling prioritization, and Ares low-health damage scaling.
+Phase 3: Trial Engine (Weeks 5-6)
+Deliverables: Develop custom item registries for scrolls. Construct state-machines for trials, entity tracking lists, mob attributes scaling formulas, and geographic boundary checks. Write coordinates broadcasting modules.
+QA Acceptance Benchmarks: Run 10 consecutive simulated trials with up to 4 concurrent players on active trials, ensuring clean trial failures/rewards.
+Phase 4: Multiplayer (Week 7)
+Deliverables: Incorporate the Trust System checks inside entity-damage algorithms. Code the Seal of Union linking structures, persistent UUID-mapping databases, and cascading double-loss event algorithms.
+QA Acceptance Benchmarks: Perform intensive PvP tests. Verify trusted players take 0 AOE damage. Test Union double-loss checks during sudden disconnects.
+Phase 5: God Expansion (Weeks 8-10)
+Deliverables: Flesh out, code, and test the remaining 11 custom Vow mechanics, YAML configs, and localized particle effect rendering scripts.
+QA Acceptance Benchmarks: Verify each vow functions cleanly without performance bottlenecks in multi-entity fights.
+Phase 6: QA & Security (Week 11)
+Deliverables: Conduct exhaustive penetration testing. Implement fail-safes for combat loggers inside active trials, item duplication checks, and exploit pathways. Profile code paths using Spark analyzer.
+QA Acceptance Benchmarks: Achieve 0 main-thread blocking operations. Prove standard client hacks (flight, speed) are blocked or mitigated.
+Phase 7: Optimization & Launch (Week 12)
+Deliverables: Set up world boundary limits (5000x5000). Optimize Paper configurations (chunk loading, entity ranges). Run a 48-hour beta with 50+ real players under intensive combat scenarios.
+QA Acceptance Benchmarks: Stable 20.0 TPS maintained under 70 concurrent active players, complete database integrity verification.
+________________
+
+
+7. Security, Exploit Prevention & Optimization
+To ensure the integrity of a highly competitive SMP, security systems are established specifically targeting classic Minecraft exploit vectors and multiplayer abuse:
+Combat Logging Mitigation during Trials
+A critical vulnerability occurs if a player activates a trial and simply disconnects when cornered. The TrialManager handles the PlayerQuitEvent explicitly. If an active trial participant leaves the server, their trial is instantly set to 'Failed'. To punish exploiters, a custom penalty is applied: when they reconnect, the plugin immediately subtracts 40% of their base max health (or kills them directly if configured), and spawns 3 aggressive trial wardens at their location. All items stored inside their trial scroll are fully consumed and lost forever.
+Seal of Union Circular Reference Defenses
+Without rigorous mathematical checks, malicious players might attempt to construct circular or chained Union bonds (e.g., Player A bound to Player B, Player B bound to Player C). This would lead to a devastating infinite recursion loop on death, triggering a complete server crash. The SealOfUnionManager enforces a strict two-node graph structure. Before binding two players, the algorithm evaluates: 'Is Player A already in a union?' and 'Is Player B already in a union?' If either query returns true, the transaction is forcefully aborted, throwing a clean warning message.
+Vow Book Duplication & Exploit Protection
+Since Vow Books are dropped on death, they present a high target for duplication exploits. To mitigate this, every Vow Book is assigned a cryptographically secure UUID generated via java.util.UUID.randomUUID() and stamped natively into the ItemStack's PersistentDataContainer. When a player attempts to activate a book, the plugin checks the UUID against a set of 'Redeemed Book UUIDs' stored in the database. If the book UUID has already been registered or redeemed, the book is dissolved on the spot, and a secure logger alert is dispatched to administrators.
+High-Performance Entity & Particle Budgeting
+Under 70 concurrent players, raw particle rendering and mob AI tracking can easily cause client and server lag. Mythos SMP resolves this using dynamic budgeting systems:
+* Particle Budgeting: All active particles (like Ares's aura or Boreas's Blizzard) are rendered using customized asynchronous tasks and sent exclusively to players within visual range (using Paper's World.spawnParticle with player filters), saving server packets and rendering overhead.
+* Mob AI Brain Throttling: Mobs spawned during trials utilize optimized Paper EntityPathfinders. Unnecessary AI components (such as wandering or long-term memory targeting) are completely stripped out. Monsters are locked into target-seeking the trial participant, drastically minimizing pathfinding calculation loops.

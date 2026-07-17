@@ -1,0 +1,15 @@
+name: MythosSMP
+version: 1.0.0
+main: com.mythossmp.MythosSMP
+api-version: 1.21
+author: MythosSMP Team
+description: A revolutionary mythological SMP plugin with divine Vows and high-stakes trials
+
+commands:
+  vow:
+    description: Manage your divine Vow
+    usage: /<command> [info|list|accept]
+    aliases: [vows]
+  trust:
+    description: Manage your trusted players list
+    usage: /<command> [add|remove|list]
