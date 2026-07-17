@@ -21,8 +21,8 @@ dependencies {
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.xerial:sqlite-jdbc:3.45.3.0")
 
-    implementation("net.kyori:adventure-api:4.17.0")
-    implementation("net.kyori:adventure-text-minimessage:4.17.0")
+    compileOnly("net.kyori:adventure-api:4.17.0")
+    compileOnly("net.kyori:adventure-text-minimessage:4.17.0")
 }
 
 java {
@@ -49,7 +49,6 @@ tasks {
         relocate("kotlin", "com.mythossmp.libs.kotlin")
         relocate("kotlinx", "com.mythossmp.libs.kotlinx")
         relocate("com.zaxxer.hikari", "com.mythossmp.libs.hikari")
-        relocate("net.kyori", "com.mythossmp.libs.kyori")
     }
 
     build {
