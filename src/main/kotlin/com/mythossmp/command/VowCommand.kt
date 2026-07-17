@@ -60,6 +60,7 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
             <gray>Available Vows:</gray>
             <gold>Ares, Plutus, Zeus, Hades, Hercules, Boreas</gold>
             <gold>Hephaestus, Erebus, Loki, Poseidon, Chronos, Hermes</gold>
+            <gold>Dionysus, Apollo</gold>
             """.trimIndent()
         ))
     }

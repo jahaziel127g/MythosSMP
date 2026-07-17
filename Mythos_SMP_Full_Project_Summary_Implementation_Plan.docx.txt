@@ -122,7 +122,7 @@ The TrustManager controls relational structures, returning true or false checks 
 ________________
 
 
-5. Deep Dive: The 12 Divine Vows
+5. Deep Dive: The 14 Divine Vows
 Below is the comprehensive technical breakdown of all 12 Vows, including precise mechanics, combat variables, targeting calculations, and ready-to-use production YAML configurations.
 Vow of Ares — God of War
 Strategic Role: Vanguard Berserker / Low-Health DPS Specialist
@@ -397,10 +397,59 @@ vow-hermes:
  ability2:
    cooldown-seconds: 150
    duration-seconds: 8
- curse:
-   max-armor-tier: "CHAINMAIL"
-   rejection-damage: 4.0
-	
+  curse:
+    max-armor-tier: "CHAINMAIL"
+    rejection-damage: 4.0
+ 	
+
+Vow of Dionysus — God of Wine
+Strategic Role: Potion Brawler / Self-Buffer
+Passive Ability: All potion effect timers are doubled. Brewing potions are 75% faster.
+Active Ability 1 (/ability1): Drunken Out: All current potion effects on the player gain +1 amplifier level.
+Active Ability 2 (/ability2): Flusher: For 10 seconds, every 3 melee hits on a target removes 15 seconds of all potion effects from the target and transfers them to the user's current effects.
+Divine Curse: Hangover: Negative potion effect timers (poison, weakness, slowness, etc.) are tripled.
+# Dionysus Configuration
+vow-dionysus:
+  enabled: true
+  passive:
+    effect-duration-multiplier: 2.0
+    brew-speed-multiplier: 0.25
+  ability1:
+    cooldown-seconds: 60
+  ability2:
+    cooldown-seconds: 120
+    duration-seconds: 10
+    hits-required: 3
+    seconds-stolen: 15
+  curse:
+    negative-effect-multiplier: 3.0
+ 	
+
+Vow of Apollo — God of Light
+Strategic Role: Light Brawler / Death-Defying Striker
+Passive Ability: Speed II status effect during daytime (1000 to 12000 ticks) while having direct sky access.
+Active Ability 1 (/ability1): Blinding Light: Creates a small sphere of light above the player that blinds all untrusted players within a 12-block radius for 8 seconds.
+Active Ability 2 (/ability2): Phoenix Revival: Before dying, activate death immunity. After 2 seconds of taking lethal damage, health replenishes to full and a fiery explosion occurs, dealing damage and knocking back untrusted players. Grants Fire Resistance, Strength I, and Resistance I for 8 seconds after revival.
+Divine Curse: Solar Dependency: During nighttime or while underground (sky light level 0), the player suffers Weakness I and Slowness I.
+# Apollo Configuration
+vow-apollo:
+  enabled: true
+  passive:
+    speed-amplifier: 1
+  ability1:
+    cooldown-seconds: 90
+    radius-blocks: 12.0
+    blind-duration-seconds: 8
+  ability2:
+    cooldown-seconds: 300
+    revive-delay-seconds: 2
+    explosion-radius: 6.0
+    explosion-damage: 10.0
+    buff-duration-seconds: 8
+  curse:
+    weakness-amplifier: 0
+    slowness-amplifier: 0
+ 	
 
 ________________
 
