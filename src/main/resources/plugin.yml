@@ -13,3 +13,16 @@ commands:
   trust:
     description: Manage your trusted players list
     usage: /<command> [add|remove|list]
+  ability1:
+    description: Activate your first Vow ability
+    usage: /<command>
+    aliases: [a1, ab1]
+  ability2:
+    description: Activate your second Vow ability
+    usage: /<command>
+    aliases: [a2, ab2]
+
+permissions:
+  mythossmp.ability:
+    description: Allows use of Vow abilities
+    default: true

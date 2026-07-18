@@ -4,6 +4,10 @@ import com.mythossmp.command.CommandRegistry
 import com.mythossmp.config.ConfigManager
 import com.mythossmp.database.DatabaseManager
 import com.mythossmp.player.PlayerDataManager
+import com.mythossmp.vow.AbilityManager
+import com.mythossmp.vow.CooldownManager
+import com.mythossmp.vow.VowRegistry
+import com.mythossmp.vow.implementations.VowAres
 import kotlinx.coroutines.runBlocking
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -17,6 +21,12 @@ class MythosSMP : JavaPlugin() {
         private set
     lateinit var commandRegistry: CommandRegistry
         private set
+    lateinit var vowRegistry: VowRegistry
+        private set
+    lateinit var cooldownManager: CooldownManager
+        private set
+    lateinit var abilityManager: AbilityManager
+        private set
 
     override fun onEnable() {
         configManager = ConfigManager(this)
@@ -27,10 +37,15 @@ class MythosSMP : JavaPlugin() {
 
         playerDataManager = PlayerDataManager(this, databaseManager)
 
+        vowRegistry = VowRegistry(this)
+        cooldownManager = CooldownManager(this)
+        abilityManager = AbilityManager(this, vowRegistry, cooldownManager)
+
+        registerVows()
+        registerListeners()
+
         commandRegistry = CommandRegistry(this)
         commandRegistry.register()
-
-        server.pluginManager.registerEvents(playerDataManager, this)
 
         logger.info("MythosSMP v${pluginMeta.version} enabled successfully.")
     }
@@ -45,6 +60,14 @@ class MythosSMP : JavaPlugin() {
             databaseManager.shutdown()
         }
         logger.info("MythosSMP disabled.")
+    }
+
+    private fun registerVows() {
+        vowRegistry.register(VowAres())
+    }
+
+    private fun registerListeners() {
+        server.pluginManager.registerEvents(playerDataManager, this)
     }
 
     companion object {
