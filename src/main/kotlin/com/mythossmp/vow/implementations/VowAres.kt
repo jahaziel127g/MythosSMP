@@ -29,10 +29,14 @@ class VowAres : Vow {
     override val enabled = true
     override val description = "God of War — Vanguard Berserker"
 
-    override val passiveEffects: List<PassiveEffect> = listOf(AresPassive())
+    override val passiveEffects: List<PassiveEffect> = listOf(passive)
     override val ability1: ActiveAbility = Bloodthorns()
     override val ability2: ActiveAbility = RageAura()
     override val curse: Curse = WarHunger()
+
+    companion object {
+        val passive = AresPassive()
+    }
 }
 
 private val rageMap = ConcurrentHashMap<UUID, Int>()

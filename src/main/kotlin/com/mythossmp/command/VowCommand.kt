@@ -28,6 +28,8 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
             "info" -> handleInfo(sender)
             "list" -> handleList(sender)
             "accept" -> handleAccept(sender, args)
+            "test" -> handleTest(sender, args)
+            "abilities" -> plugin.abilityManager.sendAbilityInfo(sender)
             else -> sendUsage(sender)
         }
 
@@ -42,7 +44,9 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
         }
 
         val vowStatus = if (profile.activeVow != null) {
-            "<green>Active Vow: <gold>${profile.activeVow}</gold></green>"
+            val vow = plugin.vowRegistry.getVowByActiveKey(profile.activeVow!!)
+            val display = vow?.displayName ?: profile.activeVow
+            "<green>Active Vow: <gold>$display</gold> — ${vow?.description ?: ""}</green>"
         } else {
             "<gray>No active Vow. Use <yellow>/vow list</yellow> to see available vows.</gray>"
         }
@@ -53,14 +57,12 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
     }
 
     private fun handleList(player: Player) {
+        val vows = plugin.vowRegistry.getAllVows()
+        val vowNames = vows.joinToString(", ") { "<gold>${it.displayName}</gold>" }
         player.sendMessage(miniMessage.deserialize(
             """
-            <dark_aqua>=== Available Vows ===</dark_aqua>
-            <gray>Trials are not yet implemented in this foundation phase.</gray>
-            <gray>Available Vows:</gray>
-            <gold>Ares, Plutus, Zeus, Hades, Hercules, Boreas</gold>
-            <gold>Hephaestus, Erebus, Loki, Poseidon, Chronos, Hermes</gold>
-            <gold>Dionysus, Apollo</gold>
+            <dark_aqua>=== Available Vows (${vows.size}) ===</dark_aqua>
+            $vowNames
             """.trimIndent()
         ))
     }
@@ -77,13 +79,48 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
         ))
     }
 
+    private fun handleTest(player: Player, args: Array<out String>) {
+        if (!player.isOp) {
+            player.sendMessage(Component.text("Only operators can use this command.", NamedTextColor.RED))
+            return
+        }
+        if (args.size < 2) {
+            player.sendMessage(Component.text("Usage: /vow test <vow_name>", NamedTextColor.RED))
+            return
+        }
+
+        val vowKey = args[1].lowercase()
+        val vow = plugin.vowRegistry.getVow(vowKey)
+        if (vow == null) {
+            player.sendMessage(Component.text("Unknown vow: $vowKey", NamedTextColor.RED))
+            return
+        }
+
+        val profile = plugin.playerDataManager.getProfile(player.uniqueId) ?: run {
+            player.sendMessage(Component.text("Profile not loaded.", NamedTextColor.RED))
+            return
+        }
+
+        profile.activeVow = vowKey
+        profile.dirty = true
+
+        vow.passiveEffects.forEach { it.apply(player) }
+        vow.curse.apply(player)
+
+        player.sendMessage(miniMessage.deserialize(
+            "<green>Test mode: <gold>${vow.displayName}</gold> vow activated. Passives applied.</green>"
+        ))
+    }
+
     private fun sendUsage(player: Player) {
         player.sendMessage(miniMessage.deserialize(
             """
             <dark_aqua>=== Vow Commands ===</dark_aqua>
             <gray>/vow info</gray> - <white>View your current Vow status</white>
             <gray>/vow list</gray> - <white>List all available Vows</white>
+            <gray>/vow abilities</gray> - <white>View ability cooldowns</white>
             <gray>/vow accept <vow></gray> - <white>Accept a Vow trial</white>
+            <gray>/vow test <vow></gray> - <white>[OP] Activate a vow for testing</white>
             """.trimIndent()
         ))
     }

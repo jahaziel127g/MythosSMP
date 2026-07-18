@@ -68,6 +68,7 @@ class MythosSMP : JavaPlugin() {
 
     private fun registerListeners() {
         server.pluginManager.registerEvents(playerDataManager, this)
+        server.pluginManager.registerEvents(VowAres.passive, this)
     }
 
     companion object {
