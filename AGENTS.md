@@ -1,32 +1,30 @@
 # Agent Guidelines for Mythos SMP Development
 
-This document provides essential context for working in the Mythos SMP repository. Read this first to avoid common pitfalls during development.
+Kotlin/Paper 1.21.11 Minecraft plugin. Packages are shaded into a single fat JAR.
 
-## 1. Core Setup Commands
-- **Build the plugin with dependencies:** `./gradlew clean shadowJar` (creates `build/libs/MythosSMP-1.0.0.jar` with all required libraries shaded)
-- **Run tests:** `./gradlew test` (currently requires manual server testing due to lack of unit tests)
+## Commands
+- **Build (and produce JAR):** `./gradlew build` — CI and releases run this. `build` depends on `shadowJar`, which emits `build/libs/MythosSMP-1.0.0.jar`.
+- **Build JAR directly:** `./gradlew shadowJar`.
+- **No automated tests exist.** There is no `src/test` and `./gradlew test` has nothing to run. Verification is manual: deploy to a Paper 1.21.11 server and test in-game.
 
-## 2. Plugin Initialization Sequence
-1. Run `./gradlew clean shadowJar` to generate the JAR
-2. Start a Paper 1.21.11 server
-3. Deploy the JAR to `plugins/MythosSMP/`
-4. Verify logs show `[MythosSMP] MythosSMP v1.0.0 enabled successfully`
+## Toolchain
+- Requires **JDK 21** (`gradle.properties` pins `org.gradle.java.installations.paths` and `build.gradle.kts` sets the toolchain to 21). Build fails on other Java versions.
+- Shadow plugin relocates `kotlin`, `kotlinx`, and `com.zaxxer.hikari` under `com.mythossmp.libs.*`. Do not reference un-relocated names in downstream code expecting them at top level.
 
-## 3. Dependency Management
-All dependencies (Kotlin, HikariCP, SQLite, Paper API) are **shaded into the final JAR** via `shadowJar`. Do not package them separately.
+## Plugin lifecycle
+- Entrypoint: `com.mythossmp.MythosSMP` (`src/main/kotlin/com/mythossmp/MythosSMP.kt`). `onEnable` order matters: Config → Database → PlayerData → VowRegistry/Cooldown/Ability → register vows & listeners → commands.
+- Vows are registered manually in `registerVows()` (only `VowAres` today). Adding a Vow requires both a registry entry and a listener registration.
+- Data persists in SQLite at `plugins/MythosSMP/mythos_smp.db` (tables: `mythos_players`, `mythos_trusts`, `mythos_unions`). Profiles are cached and flushed on `onDisable`; always `/stop` gracefully or unsaved state is lost.
+- `plugins/` is gitignored, so deployment artifacts are never committed.
 
-## 4. Database Verification
-- Confirm `plugins/MythosSMP/mythos_smp.db` exists with tables: `mythos_players`, `mythos_trusts`, `mythos_unions`
-- Use `sqlite3 plugins/MythosSMP/mythos_smp.db ".tables"` to validate
+## In-game verification
+- Commands: `/vow info|list|accept|abilities|test`, `/trust add|remove|list`, `/ability1` (`/a1`), `/ability2` (`/a2`).
+- `/vow test` and `mythossmp.ability` are OP/permission-gated. Confirm persistence survives a server restart.
 
-## 5. In-Game Command Testing
-As a player:
-- Test `/vow list`, `/vow info`, `/trust add`, `/trust remove`, `/trust list`
-- Ensure commands work after server restart
+## Releasing
+- Tag `v*` → GitHub Actions (`release.yml`) builds and attaches the JAR, using `CHANGELOG.md` as the release body.
+- Bump version in `build.gradle.kts` (the `version` property; `archiveFileName` reuses it) and `plugin.yml` (`version:` is `expand`ed from it in `processResources`). Update `CHANGELOG.md` before tagging.
 
-## 6. CI/CD Requirements
-- PRs must pass CI (`./gradlew clean shadowJar`) before code review
-- Releases require `v*` tags and `contents: write` permission for GitHub Actions
-
-## 7. Plugin Uninstallation
-Run `server.stop` or `/stop` to trigger graceful shutdown. Player data is flushed to database during shutdown.
+## What NOT to do
+- Don't add external dependencies as `compileOnly` unless the server supplies them (Paper provides `adventure`); everything else must be shaded `implementation`.
+- Don't commit JARs, `plugins/`, or `.gradle/` (gitignored).

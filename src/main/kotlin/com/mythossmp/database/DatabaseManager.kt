@@ -23,6 +23,7 @@ class DatabaseManager(private val plugin: MythosSMP) {
             maxLifetime = 60000
             connectionTimeout = 5000
             poolName = "MythosSMP-Pool"
+            connectionInitSql = "PRAGMA foreign_keys=ON"
         }
 
         dataSource = HikariDataSource(hikariConfig)

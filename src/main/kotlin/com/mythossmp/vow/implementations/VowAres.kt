@@ -12,13 +12,13 @@ import org.bukkit.Particle
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.FoodLevelChangeEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
-import org.bukkit.scheduler.BukkitRunnable
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -171,7 +171,44 @@ class WarHunger : Curse {
     override val key = "ares-war-hunger"
     override val description = "Food saturation reduced by 25%. Hunger depletes 15% faster during combat."
 
-    override fun apply(player: Player) {}
+    private val afflicted = ConcurrentHashMap.newKeySet<UUID>()
 
-    override fun remove(player: Player) {}
+    override fun apply(player: Player) {
+        afflicted.add(player.uniqueId)
+    }
+
+    override fun remove(player: Player) {
+        afflicted.remove(player.uniqueId)
+    }
+}
+
+class AresListeners : Listener {
+    @EventHandler(priority = EventPriority.LOWEST)
+    fun onBloodthornsSave(event: EntityDamageEvent) {
+        val player = event.entity as? Player ?: return
+        val data = Bloodthorns.activePlayers[player.uniqueId] ?: return
+        if (System.currentTimeMillis() - data.startTime > data.durationMs) {
+            Bloodthorns.activePlayers.remove(player.uniqueId)
+            return
+        }
+        if (data.deathImmunityUsed) return
+
+        val newHealth = player.health - event.finalDamage
+        if (newHealth <= 0.0) {
+            event.isCancelled = true
+            data.deathImmunityUsed = true
+            player.health = 1.0
+            player.sendMessage(Component.text("\uD83D\uDEE1 Bloodthorns saved you! You have 3 seconds of immunity.", NamedTextColor.RED))
+            org.bukkit.Bukkit.getScheduler().runTaskLater(
+                MythosSMP.instance,
+                Runnable {
+                    val profile = MythosSMP.instance.playerDataManager.getProfile(player.uniqueId)
+                    if (profile?.activeVow != null) {
+                        player.damage(100.0)
+                    }
+                },
+                60L
+            )
+        }
+    }
 }

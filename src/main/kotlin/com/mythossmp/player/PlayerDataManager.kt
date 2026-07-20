@@ -12,6 +12,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import java.sql.SQLException
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -27,8 +28,15 @@ class PlayerDataManager(
         val uuid = event.uniqueId
         val name = event.name
 
-        val profile = loadOrCreateProfile(uuid, name)
-        cache[uuid] = profile
+        val profile = try {
+            loadOrCreateProfile(uuid, name)
+        } catch (e: SQLException) {
+            plugin.logger.severe("Failed to load profile for $uuid during pre-login: ${e.message}")
+            null
+        }
+        if (profile != null) {
+            cache[uuid] = profile
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -36,13 +44,26 @@ class PlayerDataManager(
         val uuid = event.player.uniqueId
         val name = event.player.name
 
-        cache.compute(uuid) { _, existing ->
+        val profile =         cache.compute(uuid) { _, existing ->
             if (existing == null) {
-                loadOrCreateProfile(uuid, name)
+                try {
+                    loadOrCreateProfile(uuid, name)
+                } catch (e: SQLException) {
+                    plugin.logger.severe("Failed to load profile for $uuid during join: ${e.message}")
+                    null
+                }
             } else {
                 existing.lastKnownName = name
                 existing.dirty = true
                 existing
+            }
+        } ?: return
+
+        if (profile.activeVow != null) {
+            val vow = plugin.vowRegistry.getVowByActiveKey(profile.activeVow!!)
+            if (vow != null) {
+                vow.passiveEffects.forEach { it.apply(event.player) }
+                vow.curse.apply(event.player)
             }
         }
     }

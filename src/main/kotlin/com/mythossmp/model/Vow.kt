@@ -10,9 +10,3 @@ interface Vow {
     val ability2: ActiveAbility
     val curse: Curse
 }
-
-data class ActiveVow(
-    val vowKey: String,
-    val playerUuid: java.util.UUID,
-    val obtainedAt: Long = System.currentTimeMillis()
-)

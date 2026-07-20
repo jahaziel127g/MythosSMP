@@ -18,7 +18,12 @@ class ConfigManager(private val plugin: MythosSMP) {
     }
 
     fun getPoolSize(): Int {
-        return config.getInt("database.pool-size", 4)
+        val size = config.getInt("database.pool-size", 4)
+        if (size <= 0) {
+            plugin.logger.warning("Invalid database.pool-size ($size); falling back to 4.")
+            return 4
+        }
+        return size
     }
 
     fun getMaxBackups(): Int {

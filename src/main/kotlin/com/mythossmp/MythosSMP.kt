@@ -7,6 +7,7 @@ import com.mythossmp.player.PlayerDataManager
 import com.mythossmp.vow.AbilityManager
 import com.mythossmp.vow.CooldownManager
 import com.mythossmp.vow.VowRegistry
+import com.mythossmp.vow.implementations.AresListeners
 import com.mythossmp.vow.implementations.VowAres
 import kotlinx.coroutines.runBlocking
 import org.bukkit.plugin.java.JavaPlugin
@@ -71,6 +72,7 @@ class MythosSMP : JavaPlugin() {
     private fun registerListeners() {
         server.pluginManager.registerEvents(playerDataManager, this)
         server.pluginManager.registerEvents(VowAres.passive, this)
+        server.pluginManager.registerEvents(AresListeners(), this)
     }
 
     companion object {
