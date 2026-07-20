@@ -2,6 +2,8 @@ package com.mythossmp.player
 
 import com.mythossmp.MythosSMP
 import com.mythossmp.database.DatabaseManager
+import com.mythossmp.vow.implementations.Bloodthorns
+import com.mythossmp.vow.implementations.VowAres
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.bukkit.event.EventHandler
@@ -10,7 +12,6 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
-import java.sql.Connection
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -55,24 +56,21 @@ class PlayerDataManager(
             saveProfileSync(profile)
         }
         cache.remove(uuid)
+
+        VowAres.passive.remove(event.player)
+        Bloodthorns.activePlayers.remove(uuid)
+        plugin.cooldownManager.removePlayer(event.player)
     }
 
     fun getProfile(uuid: UUID): PlayerProfile? {
         return cache[uuid]
     }
 
-    fun getProfileOrThrow(uuid: UUID): PlayerProfile {
-        return cache[uuid] ?: throw IllegalStateException("Profile not loaded for $uuid")
-    }
-
     fun markDirty(uuid: UUID) {
         cache.computeIfPresent(uuid) { _, profile ->
-            profile.copy(dirty = true)
+            profile.dirty = true
+            profile
         }
-    }
-
-    suspend fun saveProfileAsync(profile: PlayerProfile) = withContext(Dispatchers.IO) {
-        saveProfileSync(profile)
     }
 
     private fun saveProfileSync(profile: PlayerProfile) {

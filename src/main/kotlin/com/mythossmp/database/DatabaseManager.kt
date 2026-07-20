@@ -23,7 +23,6 @@ class DatabaseManager(private val plugin: MythosSMP) {
             maxLifetime = 60000
             connectionTimeout = 5000
             poolName = "MythosSMP-Pool"
-            validate()
         }
 
         dataSource = HikariDataSource(hikariConfig)

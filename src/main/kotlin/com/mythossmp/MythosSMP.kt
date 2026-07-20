@@ -29,6 +29,8 @@ class MythosSMP : JavaPlugin() {
         private set
 
     override fun onEnable() {
+        instance = this
+
         configManager = ConfigManager(this)
         configManager.load()
 

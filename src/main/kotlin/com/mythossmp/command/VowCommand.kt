@@ -101,6 +101,17 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
             return
         }
 
+        if (profile.activeVow == vowKey) {
+            player.sendMessage(Component.text("You already have this vow active.", NamedTextColor.YELLOW))
+            return
+        }
+
+        if (profile.activeVow != null) {
+            val oldVow = plugin.vowRegistry.getVowByActiveKey(profile.activeVow!!)
+            oldVow?.passiveEffects?.forEach { it.remove(player) }
+            oldVow?.curse?.remove(player)
+        }
+
         profile.activeVow = vowKey
         profile.dirty = true
 

@@ -9,7 +9,6 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Color
 import org.bukkit.Particle
-import org.bukkit.entity.Entity
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -17,9 +16,9 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.FoodLevelChangeEvent
-import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.bukkit.scheduler.BukkitRunnable
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -40,12 +39,7 @@ class VowAres : Vow {
 }
 
 private val rageMap = ConcurrentHashMap<UUID, Int>()
-private val MAX_RAGE = 100
-
-data class RageData(
-    var rage: Int = 0,
-    var ability2Available: Boolean = false
-)
+private const val MAX_RAGE = 100
 
 class AresPassive : PassiveEffect, Listener {
     override val key = "ares-passive"
@@ -87,10 +81,6 @@ class AresPassive : PassiveEffect, Listener {
         if (newRage >= MAX_RAGE) {
             entity.sendMessage(Component.text("\u26A1 Rage Meter FULL! Use /ability2 to unleash Rage Aura.", NamedTextColor.RED))
         }
-    }
-
-    private fun getDamageBonus(rage: Int): Double {
-        return (rage.toDouble() / MAX_RAGE) * 0.5
     }
 }
 
@@ -148,11 +138,24 @@ class RageAura : ActiveAbility {
             Particle.DustOptions(Color.fromRGB(0xFF0000), 2.0f)
         )
 
+        val trusted = mythosPlugin.databaseManager.getConnection().use { conn ->
+            conn.prepareStatement(
+                "SELECT trusted_uuid FROM mythos_trusts WHERE player_uuid = ?"
+            ).use { stmt ->
+                stmt.setString(1, player.uniqueId.toString())
+                stmt.executeQuery().use { rs ->
+                    val set = mutableSetOf<UUID>()
+                    while (rs.next()) set.add(UUID.fromString(rs.getString("trusted_uuid")))
+                    set
+                }
+            }
+        }
+
         player.world.getNearbyEntities(player.location, radius, radius, radius)
             .filterIsInstance<LivingEntity>()
             .filter { it != player }
             .forEach { entity ->
-                if (entity is Player && isTrusted(player, entity, mythosPlugin)) return@forEach
+                if (entity is Player && trusted.contains(entity.uniqueId)) return@forEach
 
                 entity.damage(12.0, player)
                 if (entity is Player) {
@@ -161,22 +164,6 @@ class RageAura : ActiveAbility {
             }
 
         player.sendMessage(Component.text("\uD83D\uDCA5 Rage Aura unleashed!", NamedTextColor.RED))
-    }
-
-    private fun isTrusted(player: Player, target: Player, plugin: MythosSMP): Boolean {
-        return try {
-            plugin.databaseManager.getConnection().use { conn ->
-                conn.prepareStatement(
-                    "SELECT 1 FROM mythos_trusts WHERE player_uuid = ? AND trusted_uuid = ?"
-                ).use { stmt ->
-                    stmt.setString(1, player.uniqueId.toString())
-                    stmt.setString(2, target.uniqueId.toString())
-                    stmt.executeQuery().use { rs -> rs.next() }
-                }
-            }
-        } catch (_: Exception) {
-            false
-        }
     }
 }
 
