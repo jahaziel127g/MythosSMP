@@ -11,8 +11,18 @@ Kotlin/Paper 1.21.11 Minecraft plugin. Packages are shaded into a single fat JAR
 - Requires **JDK 21** (`gradle.properties` pins `org.gradle.java.installations.paths` and `build.gradle.kts` sets the toolchain to 21). Build fails on other Java versions.
 - Shadow plugin relocates `kotlin`, `kotlinx`, and `com.zaxxer.hikari` under `com.mythossmp.libs.*`. Do not reference un-relocated names in downstream code expecting them at top level.
 
+## Architecture (DDD layers)
+```
+presentation/     — commands + events (routers only)
+application/      — services (ProfileService, AbilityExecutor, CooldownService)
+domain/           — models + vow logic (Vow, VowAbility, PlayerProfile, VowRegistry, VowAres)
+infrastructure/   — DB + config (DatabaseManager, SqlProfileRepository, ConfigManager)
+```
+- `ProfileRepository` interface in `application/` — `SqlProfileRepository` in `infrastructure/` implements it.
+- Names after rename: `profileService` (was `playerDataManager`), `cooldownService` (was `cooldownManager`), `abilityExecutor` (was `abilityManager`).
+
 ## Plugin lifecycle
-- Entrypoint: `com.mythossmp.MythosSMP` (`src/main/kotlin/com/mythossmp/MythosSMP.kt`). `onEnable` order matters: Config → Database → PlayerData → VowRegistry/Cooldown/Ability → register vows & listeners → commands.
+- Entrypoint: `com.mythossmp.MythosSMP` (`src/main/kotlin/com/mythossmp/MythosSMP.kt`). `onEnable` order matters: Config → Database → ProfileService → VowRegistry/CooldownService/AbilityExecutor → register vows & listeners → commands.
 - Vows are registered manually in `registerVows()` (only `VowAres` today). Adding a Vow requires both a registry entry and a listener registration.
 - Data persists in SQLite at `plugins/MythosSMP/mythos_smp.db` (tables: `mythos_players`, `mythos_trusts`, `mythos_unions`). Profiles are cached and flushed on `onDisable`; always `/stop` gracefully or unsaved state is lost.
 - `plugins/` is gitignored, so deployment artifacts are never committed.

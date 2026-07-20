@@ -1,4 +1,4 @@
-package com.mythossmp.command
+package com.mythossmp.presentation.command
 
 import com.mythossmp.MythosSMP
 import net.kyori.adventure.text.Component
@@ -29,7 +29,7 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
             "list" -> handleList(sender)
             "accept" -> handleAccept(sender, args)
             "test" -> handleTest(sender, args)
-            "abilities" -> plugin.abilityManager.sendAbilityInfo(sender)
+            "abilities" -> plugin.abilityExecutor.sendAbilityInfo(sender)
             else -> sendUsage(sender)
         }
 
@@ -37,24 +37,37 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
     }
 
     private fun handleInfo(player: Player) {
-        val profile = plugin.playerDataManager.getProfile(player.uniqueId)
+        val profile = plugin.profileService.getProfile(player.uniqueId)
         if (profile == null) {
             player.sendMessage(Component.text("Profile not loaded yet.", NamedTextColor.RED))
             return
         }
 
         val activeKey = profile.activeVow
-        val vowStatus = if (activeKey != null) {
+        if (activeKey != null) {
             val vow = plugin.vowRegistry.getVowByActiveKey(activeKey)
-            val display = vow?.displayName ?: activeKey
-            "<green>Active Vow: <gold>$display</gold> — ${vow?.description ?: ""}</green>"
+            if (vow != null) {
+                player.sendMessage(miniMessage.deserialize(
+                    "<dark_aqua>=== MYTHOS VOW ===</dark_aqua>\n" +
+                    "<green>Active Vow: <gold>${vow.displayName}</gold> — ${vow.description}</green>"
+                ))
+            } else {
+                player.sendMessage(Component.text()
+                    .color(NamedTextColor.DARK_AQUA)
+                    .append(Component.text("=== MYTHOS VOW ==="))
+                    .append(Component.newline())
+                    .append(Component.text("Active Vow: ", NamedTextColor.GREEN))
+                    .append(Component.text(activeKey, NamedTextColor.GOLD))
+                    .append(Component.text(" — (unknown vow)", NamedTextColor.GRAY))
+                    .build()
+                )
+            }
         } else {
-            "<gray>No active Vow. Use <yellow>/vow list</yellow> to see available vows.</gray>"
+            player.sendMessage(miniMessage.deserialize(
+                "<dark_aqua>=== MYTHOS VOW ===</dark_aqua>\n" +
+                "<gray>No active Vow. Use <yellow>/vow list</yellow> to see available vows.</gray>"
+            ))
         }
-
-        player.sendMessage(miniMessage.deserialize(
-            "<dark_aqua>=== MYTHOS VOW ===</dark_aqua>\n$vowStatus"
-        ))
     }
 
     private fun handleList(player: Player) {
@@ -97,12 +110,13 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
             return
         }
 
-        val profile = plugin.playerDataManager.getProfile(player.uniqueId) ?: run {
+        val profile = plugin.profileService.getProfile(player.uniqueId) ?: run {
             player.sendMessage(Component.text("Profile not loaded.", NamedTextColor.RED))
             return
         }
 
-        if (profile.activeVow == vowKey) {
+        val normalizeKey = plugin.vowRegistry.normalizeActiveKey(vowKey)
+        if (profile.activeVow == normalizeKey) {
             player.sendMessage(Component.text("You already have this vow active.", NamedTextColor.YELLOW))
             return
         }
@@ -114,8 +128,9 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
             oldVow?.curse?.remove(player)
         }
 
-        profile.activeVow = vowKey
-        profile.dirty = true
+        plugin.profileService.updateProfile(player.uniqueId) {
+            it.copy(activeVow = normalizeKey, dirty = true)
+        }
 
         vow.passiveEffects.forEach { it.apply(player) }
         vow.curse.apply(player)

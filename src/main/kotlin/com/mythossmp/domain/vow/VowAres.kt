@@ -1,10 +1,10 @@
-package com.mythossmp.vow.implementations
+package com.mythossmp.domain.vow
 
 import com.mythossmp.MythosSMP
-import com.mythossmp.model.ActiveAbility
-import com.mythossmp.model.Curse
-import com.mythossmp.model.PassiveEffect
-import com.mythossmp.model.Vow
+import com.mythossmp.domain.model.ActiveAbility
+import com.mythossmp.domain.model.Curse
+import com.mythossmp.domain.model.PassiveEffect
+import com.mythossmp.domain.model.Vow
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Color
@@ -31,10 +31,11 @@ class VowAres : Vow {
     override val passiveEffects: List<PassiveEffect> = listOf(passive)
     override val ability1: ActiveAbility = Bloodthorns()
     override val ability2: ActiveAbility = RageAura()
-    override val curse: Curse = WarHunger()
+    override val curse: Curse = curseInstance
 
     companion object {
         val passive = AresPassive()
+        val curseInstance = WarHunger()
     }
 }
 
@@ -165,7 +166,7 @@ class RageAura : ActiveAbility {
     }
 }
 
-class WarHunger : Curse {
+class WarHunger : Curse, Listener {
     override val key = "ares-war-hunger"
     override val description = "Food saturation reduced by 25%. Hunger depletes 15% faster during combat."
 
@@ -177,6 +178,20 @@ class WarHunger : Curse {
 
     override fun remove(player: Player) {
         afflicted.remove(player.uniqueId)
+    }
+
+    @EventHandler
+    fun onFoodLevelChange(event: FoodLevelChangeEvent) {
+        val player = event.entity as? Player ?: return
+        if (!afflicted.contains(player.uniqueId)) return
+
+        val oldLevel = player.foodLevel
+        val newLevel = event.foodLevel
+        if (newLevel < oldLevel) {
+            val diff = oldLevel - newLevel
+            val increasedDiff = (diff * 1.15).toInt().coerceAtLeast(1)
+            event.foodLevel = (oldLevel - increasedDiff).coerceAtLeast(0)
+        }
     }
 }
 
@@ -196,11 +211,14 @@ class AresListeners : Listener {
             event.isCancelled = true
             data.deathImmunityUsed = true
             player.health = 1.0
-            player.sendMessage(Component.text("\uD83D\uDEE1 Bloodthorns saved you! You have 3 seconds of immunity.", NamedTextColor.RED))
+            player.setNoDamageTicks(60)
+            player.sendMessage(Component.text("\uD83D\uDEE1 Bloodthorns saved you from lethal damage! You have 3 seconds before the vow exacts its price.", NamedTextColor.RED))
             org.bukkit.Bukkit.getScheduler().runTaskLater(
                 MythosSMP.instance,
                 Runnable {
-                    val profile = MythosSMP.instance.playerDataManager.getProfile(player.uniqueId)
+                    if (!player.isOnline) return@Runnable
+                    player.setNoDamageTicks(0)
+                    val profile = MythosSMP.instance.profileService.getProfile(player.uniqueId)
                     if (profile?.activeVow != null) {
                         player.damage(100.0)
                     }

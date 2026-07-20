@@ -1,4 +1,4 @@
-package com.mythossmp.model
+package com.mythossmp.domain.model
 
 import org.bukkit.entity.Player
 

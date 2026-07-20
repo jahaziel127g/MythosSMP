@@ -1,4 +1,4 @@
-package com.mythossmp.model
+package com.mythossmp.domain.model
 
 interface Vow {
     val key: String

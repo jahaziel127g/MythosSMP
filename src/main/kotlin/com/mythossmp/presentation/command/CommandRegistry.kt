@@ -1,4 +1,4 @@
-package com.mythossmp.command
+package com.mythossmp.presentation.command
 
 import com.mythossmp.MythosSMP
 

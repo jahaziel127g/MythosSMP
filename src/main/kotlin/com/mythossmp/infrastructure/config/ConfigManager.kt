@@ -1,4 +1,4 @@
-package com.mythossmp.config
+package com.mythossmp.infrastructure.config
 
 import com.mythossmp.MythosSMP
 import org.bukkit.configuration.file.FileConfiguration

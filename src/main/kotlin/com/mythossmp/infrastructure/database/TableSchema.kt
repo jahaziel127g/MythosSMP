@@ -1,4 +1,4 @@
-package com.mythossmp.database
+package com.mythossmp.infrastructure.database
 
 object TableSchema {
     const val PLAYERS_TABLE = """

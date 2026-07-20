@@ -1,14 +1,15 @@
-package com.mythossmp.vow
+package com.mythossmp.application.ability
 
 import com.mythossmp.MythosSMP
+import com.mythossmp.domain.vow.VowRegistry
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.Player
 
-class AbilityManager(
+class AbilityExecutor(
     private val plugin: MythosSMP,
     private val vowRegistry: VowRegistry,
-    private val cooldownManager: CooldownManager
+    private val cooldownService: CooldownService
 ) {
 
     fun executeAbility(player: Player, abilityNumber: Int) {
@@ -32,14 +33,14 @@ class AbilityManager(
             }
         }
 
-        if (cooldownManager.isOnCooldown(player, ability.key)) {
-            cooldownManager.sendOnCooldownMessage(player, ability.displayName)
+        if (cooldownService.isOnCooldown(player, ability.key)) {
+            cooldownService.sendOnCooldownMessage(player, ability.displayName)
             return
         }
 
         ability.execute(player, plugin)
 
-        cooldownManager.setCooldown(player, ability.key, ability.cooldownSeconds)
+        cooldownService.setCooldown(player, ability.key, ability.cooldownSeconds)
     }
 
     fun sendAbilityInfo(player: Player) {
@@ -56,8 +57,8 @@ class AbilityManager(
             .build()
         )
 
-        val cd1 = cooldownManager.getRemainingSeconds(player, vow.ability1.key)
-        val cd2 = cooldownManager.getRemainingSeconds(player, vow.ability2.key)
+        val cd1 = cooldownService.getRemainingSeconds(player, vow.ability1.key)
+        val cd2 = cooldownService.getRemainingSeconds(player, vow.ability2.key)
 
         player.sendMessage(Component.text()
             .append(Component.text("1. ", NamedTextColor.GRAY))

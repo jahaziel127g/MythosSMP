@@ -1,16 +1,15 @@
-package com.mythossmp.vow
+package com.mythossmp.application.ability
 
 import com.mythossmp.MythosSMP
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
-import net.kyori.adventure.title.Title
 import org.bukkit.entity.Player
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-class CooldownManager(private val plugin: MythosSMP) {
+class CooldownService(private val plugin: MythosSMP) {
 
     private val cooldowns: ConcurrentHashMap<UUID, ConcurrentHashMap<String, Instant>> = ConcurrentHashMap()
 
@@ -23,8 +22,8 @@ class CooldownManager(private val plugin: MythosSMP) {
     fun getRemainingSeconds(player: Player, abilityKey: String): Long {
         val playerCooldowns = cooldowns[player.uniqueId] ?: return 0
         val expiry = playerCooldowns[abilityKey.lowercase()] ?: return 0
-        val remaining = Duration.between(Instant.now(), expiry).seconds
-        return maxOf(0, remaining)
+        val millis = Duration.between(Instant.now(), expiry).toMillis()
+        return maxOf(0, (millis + 999) / 1000)
     }
 
     fun setCooldown(player: Player, abilityKey: String, seconds: Int) {
@@ -35,9 +34,9 @@ class CooldownManager(private val plugin: MythosSMP) {
     }
 
     private fun applyGlobalMultiplier(player: Player, baseSeconds: Int): Int {
-        val profile = plugin.playerDataManager.getProfile(player.uniqueId)
+        val profile = plugin.profileService.getProfile(player.uniqueId)
         val multiplier = profile?.cooldownMultiplier ?: 1.0
-        return (baseSeconds * multiplier).toInt().coerceAtLeast(1)
+        return (baseSeconds * multiplier).toInt().coerceAtLeast(0)
     }
 
     fun sendCooldownActionBar(player: Player, abilityKey: String, remaining: Long) {

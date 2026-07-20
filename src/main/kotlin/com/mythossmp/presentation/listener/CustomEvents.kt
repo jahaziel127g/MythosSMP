@@ -1,4 +1,4 @@
-package com.mythossmp.event
+package com.mythossmp.presentation.listener
 
 import org.bukkit.entity.Player
 import org.bukkit.event.Event

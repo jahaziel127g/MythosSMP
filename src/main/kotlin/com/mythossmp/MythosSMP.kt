@@ -1,14 +1,15 @@
 package com.mythossmp
 
-import com.mythossmp.command.CommandRegistry
-import com.mythossmp.config.ConfigManager
-import com.mythossmp.database.DatabaseManager
-import com.mythossmp.player.PlayerDataManager
-import com.mythossmp.vow.AbilityManager
-import com.mythossmp.vow.CooldownManager
-import com.mythossmp.vow.VowRegistry
-import com.mythossmp.vow.implementations.AresListeners
-import com.mythossmp.vow.implementations.VowAres
+import com.mythossmp.application.ability.AbilityExecutor
+import com.mythossmp.application.ability.CooldownService
+import com.mythossmp.application.profile.ProfileService
+import com.mythossmp.domain.vow.AresListeners
+import com.mythossmp.domain.vow.VowAres
+import com.mythossmp.domain.vow.VowRegistry
+import com.mythossmp.infrastructure.config.ConfigManager
+import com.mythossmp.infrastructure.database.DatabaseManager
+import com.mythossmp.infrastructure.database.SqlProfileRepository
+import com.mythossmp.presentation.command.CommandRegistry
 import kotlinx.coroutines.runBlocking
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -18,15 +19,15 @@ class MythosSMP : JavaPlugin() {
         private set
     lateinit var databaseManager: DatabaseManager
         private set
-    lateinit var playerDataManager: PlayerDataManager
+    lateinit var profileService: ProfileService
         private set
     lateinit var commandRegistry: CommandRegistry
         private set
     lateinit var vowRegistry: VowRegistry
         private set
-    lateinit var cooldownManager: CooldownManager
+    lateinit var cooldownService: CooldownService
         private set
-    lateinit var abilityManager: AbilityManager
+    lateinit var abilityExecutor: AbilityExecutor
         private set
 
     override fun onEnable() {
@@ -38,11 +39,12 @@ class MythosSMP : JavaPlugin() {
         databaseManager = DatabaseManager(this)
         databaseManager.initialize()
 
-        playerDataManager = PlayerDataManager(this, databaseManager)
+        val profileRepository = SqlProfileRepository(databaseManager)
+        profileService = ProfileService(this, profileRepository)
 
         vowRegistry = VowRegistry(this)
-        cooldownManager = CooldownManager(this)
-        abilityManager = AbilityManager(this, vowRegistry, cooldownManager)
+        cooldownService = CooldownService(this)
+        abilityExecutor = AbilityExecutor(this, vowRegistry, cooldownService)
 
         registerVows()
         registerListeners()
@@ -54,15 +56,18 @@ class MythosSMP : JavaPlugin() {
     }
 
     override fun onDisable() {
-        if (::playerDataManager.isInitialized) {
-            runBlocking {
-                playerDataManager.flushAll()
+        try {
+            if (::profileService.isInitialized) {
+                runBlocking {
+                    profileService.flushAll()
+                }
             }
+        } finally {
+            if (::databaseManager.isInitialized) {
+                databaseManager.shutdown()
+            }
+            logger.info("MythosSMP disabled.")
         }
-        if (::databaseManager.isInitialized) {
-            databaseManager.shutdown()
-        }
-        logger.info("MythosSMP disabled.")
     }
 
     private fun registerVows() {
@@ -70,8 +75,9 @@ class MythosSMP : JavaPlugin() {
     }
 
     private fun registerListeners() {
-        server.pluginManager.registerEvents(playerDataManager, this)
+        server.pluginManager.registerEvents(profileService, this)
         server.pluginManager.registerEvents(VowAres.passive, this)
+        server.pluginManager.registerEvents(VowAres.curseInstance, this)
         server.pluginManager.registerEvents(AresListeners(), this)
     }
 

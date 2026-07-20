@@ -1,10 +1,11 @@
-package com.mythossmp.command
+package com.mythossmp.presentation.command
 
 import com.mythossmp.MythosSMP
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
+import org.bukkit.OfflinePlayer
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -80,17 +81,27 @@ class TrustCommand(private val plugin: MythosSMP) : CommandExecutor {
         }
     }
 
+    private fun resolveTarget(name: String): OfflinePlayer? {
+        val online = Bukkit.getPlayerExact(name)
+        if (online != null) return online
+        val offline = Bukkit.getOfflinePlayer(name)
+        return if (offline.hasPlayedBefore()) offline else null
+    }
+
     private fun handleRemove(player: Player, args: Array<out String>) {
         if (args.size < 2) {
             player.sendMessage(Component.text("Usage: /trust remove <player>", NamedTextColor.RED))
             return
         }
 
-        val target = Bukkit.getPlayerExact(args[1])
-        val targetUuid = target?.uniqueId ?: run {
+        val target = resolveTarget(args[1])
+        if (target == null) {
             player.sendMessage(Component.text("Player not found.", NamedTextColor.RED))
             return
         }
+
+        val targetUuid = target.uniqueId
+        val targetName = target.name ?: args[1]
 
         try {
             plugin.databaseManager.getConnection().use { conn ->
@@ -102,11 +113,11 @@ class TrustCommand(private val plugin: MythosSMP) : CommandExecutor {
                     val rows = stmt.executeUpdate()
                     if (rows > 0) {
                         player.sendMessage(miniMessage.deserialize(
-                            "<green>Removed <gold>${args[1]}</gold> from your trust list.</green>"
+                            "<green>Removed <gold>${targetName}</gold> from your trust list.</green>"
                         ))
                     } else {
                         player.sendMessage(Component.text(
-                            "${args[1]} was not in your trust list.",
+                            "${targetName} was not in your trust list.",
                             NamedTextColor.YELLOW
                         ))
                     }

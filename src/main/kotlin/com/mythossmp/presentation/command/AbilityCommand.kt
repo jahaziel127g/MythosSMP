@@ -1,4 +1,4 @@
-package com.mythossmp.command
+package com.mythossmp.presentation.command
 
 import com.mythossmp.MythosSMP
 import net.kyori.adventure.text.Component
@@ -19,7 +19,7 @@ class AbilityCommand(
             return true
         }
 
-        plugin.abilityManager.executeAbility(sender, abilityNumber)
+        plugin.abilityExecutor.executeAbility(sender, abilityNumber)
         return true
     }
 }
