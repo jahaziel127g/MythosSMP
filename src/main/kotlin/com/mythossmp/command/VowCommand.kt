@@ -43,9 +43,10 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
             return
         }
 
-        val vowStatus = if (profile.activeVow != null) {
-            val vow = plugin.vowRegistry.getVowByActiveKey(profile.activeVow!!)
-            val display = vow?.displayName ?: profile.activeVow
+        val activeKey = profile.activeVow
+        val vowStatus = if (activeKey != null) {
+            val vow = plugin.vowRegistry.getVowByActiveKey(activeKey)
+            val display = vow?.displayName ?: activeKey
             "<green>Active Vow: <gold>$display</gold> — ${vow?.description ?: ""}</green>"
         } else {
             "<gray>No active Vow. Use <yellow>/vow list</yellow> to see available vows.</gray>"
@@ -106,8 +107,9 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
             return
         }
 
-        if (profile.activeVow != null) {
-            val oldVow = plugin.vowRegistry.getVowByActiveKey(profile.activeVow!!)
+        val oldActiveKey = profile.activeVow
+        if (oldActiveKey != null) {
+            val oldVow = plugin.vowRegistry.getVowByActiveKey(oldActiveKey)
             oldVow?.passiveEffects?.forEach { it.remove(player) }
             oldVow?.curse?.remove(player)
         }

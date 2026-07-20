@@ -126,30 +126,34 @@ class PlayerDataManager(
     }
 
     private fun loadOrCreateProfile(uuid: UUID, name: String): PlayerProfile {
-        databaseManager.getConnection().use { conn ->
-            conn.prepareStatement(
-                "SELECT * FROM mythos_players WHERE player_uuid = ?"
-            ).use { stmt ->
-                stmt.setString(1, uuid.toString())
-                stmt.executeQuery().use { rs ->
-                    if (rs.next()) {
-                        return PlayerProfile(
-                            playerUuid = uuid,
-                            lastKnownName = rs.getString("last_known_name"),
-                            activeVow = rs.getString("active_vow"),
-                            cooldownMultiplier = rs.getDouble("cooldown_multiplier")
-                        )
+        try {
+            databaseManager.getConnection().use { conn ->
+                conn.prepareStatement(
+                    "SELECT * FROM mythos_players WHERE player_uuid = ?"
+                ).use { stmt ->
+                    stmt.setString(1, uuid.toString())
+                    stmt.executeQuery().use { rs ->
+                        if (rs.next()) {
+                            return PlayerProfile(
+                                playerUuid = uuid,
+                                lastKnownName = rs.getString("last_known_name"),
+                                activeVow = rs.getString("active_vow"),
+                                cooldownMultiplier = rs.getDouble("cooldown_multiplier")
+                            )
+                        }
                     }
                 }
-            }
 
-            conn.prepareStatement(
-                "INSERT INTO mythos_players (player_uuid, last_known_name) VALUES (?, ?)"
-            ).use { stmt ->
-                stmt.setString(1, uuid.toString())
-                stmt.setString(2, name)
-                stmt.executeUpdate()
+                conn.prepareStatement(
+                    "INSERT INTO mythos_players (player_uuid, last_known_name) VALUES (?, ?)"
+                ).use { stmt ->
+                    stmt.setString(1, uuid.toString())
+                    stmt.setString(2, name)
+                    stmt.executeUpdate()
+                }
             }
+        } catch (e: Exception) {
+            plugin.logger.severe("Failed to load/create profile for $uuid: ${e.message}")
         }
 
         return PlayerProfile(

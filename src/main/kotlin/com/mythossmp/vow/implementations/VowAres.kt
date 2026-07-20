@@ -58,11 +58,10 @@ class AresPassive : PassiveEffect, Listener {
     @EventHandler
     fun onDamageDealt(event: EntityDamageByEntityEvent) {
         val damager = event.damager as? Player ?: return
-        if (!rageMap.containsKey(damager.uniqueId)) return
-        val current = rageMap[damager.uniqueId] ?: return
-        val damage = event.finalDamage.toInt()
-        val newRage = (current + damage).coerceAtMost(MAX_RAGE)
-        rageMap[damager.uniqueId] = newRage
+        val newRage = rageMap.compute(damager.uniqueId) { _, current ->
+            if (current == null) return@compute null
+            (current + event.finalDamage.toInt()).coerceAtMost(MAX_RAGE)
+        } ?: return
 
         if (newRage >= MAX_RAGE) {
             damager.sendMessage(Component.text("\u26A1 Rage Meter FULL! Use /ability2 to unleash Rage Aura.", NamedTextColor.RED))
@@ -72,11 +71,10 @@ class AresPassive : PassiveEffect, Listener {
     @EventHandler
     fun onDamageReceived(event: EntityDamageEvent) {
         val entity = event.entity as? Player ?: return
-        if (!rageMap.containsKey(entity.uniqueId)) return
-        val current = rageMap[entity.uniqueId] ?: return
-        val damage = event.finalDamage.toInt()
-        val newRage = (current + damage * 2).coerceAtMost(MAX_RAGE)
-        rageMap[entity.uniqueId] = newRage
+        val newRage = rageMap.compute(entity.uniqueId) { _, current ->
+            if (current == null) return@compute null
+            (current + event.finalDamage.toInt() * 2).coerceAtMost(MAX_RAGE)
+        } ?: return
 
         if (newRage >= MAX_RAGE) {
             entity.sendMessage(Component.text("\u26A1 Rage Meter FULL! Use /ability2 to unleash Rage Aura.", NamedTextColor.RED))
