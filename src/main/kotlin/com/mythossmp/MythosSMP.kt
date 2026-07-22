@@ -104,8 +104,8 @@ class MythosSMP : JavaPlugin() {
             description = "Prove your worth to the God of War",
             waves = listOf(
                 WaveConfig(1, listOf(MobSpawnEntry(EntityType.ZOMBIE, 4), MobSpawnEntry(EntityType.SPIDER, 2))),
-                WaveConfig(2, listOf(MobSpawnEntry(EntityType.SKELETON, 4), MobSpawnEntry(EntityType.WOLF, 3))),
-                WaveConfig(3, listOf(MobSpawnEntry(EntityType.IRON_GOLEM, 2), MobSpawnEntry(EntityType.ZOMBIE, 2)))
+                WaveConfig(2, listOf(MobSpawnEntry(EntityType.SKELETON, 4), MobSpawnEntry(EntityType.CREEPER, 2))),
+                WaveConfig(3, listOf(MobSpawnEntry(EntityType.VINDICATOR, 3), MobSpawnEntry(EntityType.EVOKER, 1)))
             ),
             baseHealth = 40.0,
             baseDamage = 6.0,

@@ -23,13 +23,13 @@ trials:
         mobs:
           - type: SKELETON
             count: 4
-          - type: WOLF
-            count: 3
+          - type: CREEPER
+            count: 2
       - wave-number: 3
         mobs:
-          - type: IRON_GOLEM
-            count: 2
-          - type: ZOMBIE
-            count: 2
+          - type: VINDICATOR
+            count: 3
+          - type: EVOKER
+            count: 1
 
 debug: false

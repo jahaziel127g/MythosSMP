@@ -98,7 +98,9 @@ class TrialService(private val plugin: MythosSMP) {
     private fun startWave(session: TrialSession) {
         session.currentWave++
         session.waveStartTime = System.currentTimeMillis()
-        session.transitionTo(TrialState.ACTIVE)
+        if (session.state == TrialState.SUMMONING) {
+            session.transitionTo(TrialState.ACTIVE)
+        }
 
         val wave = session.trialConfig.waves.getOrNull(session.currentWave - 1) ?: run {
             completeTrial(session)
@@ -132,7 +134,7 @@ class TrialService(private val plugin: MythosSMP) {
         val z = b.minZ + (Math.random() * (b.maxZ - b.minZ + 1)).toInt()
         val y = world.getHighestBlockYAt(x, z).coerceIn(b.minY, b.maxY)
 
-        val loc = Location(world, x + 0.5, y.toDouble(), z + 0.5)
+        val loc = Location(world, x + 0.5, y + 1.0, z + 0.5)
         val entity = world.spawnEntity(loc, type) as? LivingEntity ?: return
 
         val baseHealth = session.trialConfig.baseHealth
