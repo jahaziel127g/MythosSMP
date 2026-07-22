@@ -8,7 +8,7 @@ interface ActiveAbility {
     val cooldownSeconds: Int
     val description: String
 
-    fun execute(player: Player, plugin: Any)
+    fun execute(player: Player, plugin: Any): Boolean
 }
 
 interface PassiveEffect {

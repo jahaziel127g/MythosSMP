@@ -34,13 +34,18 @@ class AbilityExecutor(
         }
 
         if (cooldownService.isOnCooldown(player, ability.key)) {
-            cooldownService.sendOnCooldownMessage(player, ability.displayName)
+            cooldownService.sendOnCooldownMessage(player, ability.key, ability.displayName)
             return
         }
 
-        ability.execute(player, plugin)
+        if (!ability.execute(player, plugin)) return
 
         cooldownService.setCooldown(player, ability.key, ability.cooldownSeconds)
+        plugin.statusDisplay.refreshPlayer(player)
+    }
+
+    fun getCooldownSeconds(player: Player, abilityKey: String): Long {
+        return cooldownService.getRemainingSeconds(player, abilityKey)
     }
 
     fun sendAbilityInfo(player: Player) {

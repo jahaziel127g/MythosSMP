@@ -10,6 +10,7 @@ import com.mythossmp.infrastructure.config.ConfigManager
 import com.mythossmp.infrastructure.database.DatabaseManager
 import com.mythossmp.infrastructure.database.SqlProfileRepository
 import com.mythossmp.presentation.command.CommandRegistry
+import com.mythossmp.presentation.display.StatusDisplay
 import kotlinx.coroutines.runBlocking
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -28,6 +29,8 @@ class MythosSMP : JavaPlugin() {
     lateinit var cooldownService: CooldownService
         private set
     lateinit var abilityExecutor: AbilityExecutor
+        private set
+    lateinit var statusDisplay: StatusDisplay
         private set
 
     override fun onEnable() {
@@ -52,10 +55,16 @@ class MythosSMP : JavaPlugin() {
         commandRegistry = CommandRegistry(this)
         commandRegistry.register()
 
+        statusDisplay = StatusDisplay(this)
+        statusDisplay.start()
+
         logger.info("MythosSMP v${pluginMeta.version} enabled successfully.")
     }
 
     override fun onDisable() {
+        if (::statusDisplay.isInitialized) {
+            statusDisplay.stop()
+        }
         try {
             if (::profileService.isInitialized) {
                 runBlocking {

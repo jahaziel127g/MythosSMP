@@ -8,6 +8,7 @@ import com.mythossmp.domain.model.Vow
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Color
+import org.bukkit.Material
 import org.bukkit.Particle
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
@@ -36,6 +37,9 @@ class VowAres : Vow {
     companion object {
         val passive = AresPassive()
         val curseInstance = WarHunger()
+
+        fun getRage(playerUuid: UUID): Int = rageMap[playerUuid] ?: 0
+        fun getMaxRage(): Int = MAX_RAGE
     }
 }
 
@@ -59,6 +63,30 @@ class AresPassive : PassiveEffect, Listener {
     @EventHandler
     fun onDamageDealt(event: EntityDamageByEntityEvent) {
         val damager = event.damager as? Player ?: return
+
+        val currentRage = rageMap[damager.uniqueId]
+        if (currentRage != null) {
+            val rageMultiplier = 1.0 + (currentRage / 200.0)
+
+            val bloodthornsMultiplier = run {
+                val data = Bloodthorns.activePlayers[damager.uniqueId] ?: return@run 1.0
+                val elapsed = System.currentTimeMillis() - data.startTime
+                if (elapsed > data.durationMs) {
+                    Bloodthorns.activePlayers.remove(damager.uniqueId)
+                    return@run 1.0
+                }
+                val maxHealth = damager.maxHealth
+                val healthLost = maxHealth - damager.health
+                val chunks = (healthLost / (maxHealth * 0.1)).toInt()
+                1.0 + (chunks * 0.05)
+            }
+
+            val total = rageMultiplier * bloodthornsMultiplier
+            if (total > 1.0) {
+                event.damage = event.damage * total
+            }
+        }
+
         val newRage = rageMap.compute(damager.uniqueId) { _, current ->
             if (current == null) return@compute null
             (current + event.finalDamage.toInt()).coerceAtMost(MAX_RAGE)
@@ -99,7 +127,7 @@ class Bloodthorns : ActiveAbility {
         var deathImmunityUsed: Boolean = false
     )
 
-    override fun execute(player: Player, plugin: Any) {
+    override fun execute(player: Player, plugin: Any): Boolean {
         activePlayers[player.uniqueId] = BloodthornsData()
 
         player.sendMessage(Component.text("\u2694 Bloodthorns activated! Damage scales with your missing health.", NamedTextColor.RED))
@@ -109,6 +137,7 @@ class Bloodthorns : ActiveAbility {
             50, 0.5, 0.5, 0.5, 0.1,
             Particle.DustOptions(Color.fromRGB(0xFF0000), 1.5f)
         )
+        return true
     }
 }
 
@@ -118,13 +147,13 @@ class RageAura : ActiveAbility {
     override val cooldownSeconds = 30
     override val description = "Consumes 100% Rage to deal 12 damage to all untrusted entities in an 8-block radius."
 
-    override fun execute(player: Player, plugin: Any) {
+    override fun execute(player: Player, plugin: Any): Boolean {
         val mythosPlugin = plugin as MythosSMP
         val currentRage = rageMap[player.uniqueId] ?: 0
 
         if (currentRage < MAX_RAGE) {
             player.sendMessage(Component.text("Rage Aura requires 100% Rage! Current: $currentRage%", NamedTextColor.RED))
-            return
+            return false
         }
 
         rageMap[player.uniqueId] = 0
@@ -158,11 +187,16 @@ class RageAura : ActiveAbility {
 
                 entity.damage(12.0, player)
                 if (entity is Player) {
-                    entity.sendMessage(Component.text("\uD83D\uDCA5 You were hit by ${player.name}'s Rage Aura!", NamedTextColor.RED))
+                    val p = entity as Player
+                    if (p.isBlocking) {
+                        p.setCooldown(Material.SHIELD, 100)
+                    }
+                    p.sendMessage(Component.text("\uD83D\uDCA5 You were hit by ${player.name}'s Rage Aura!", NamedTextColor.RED))
                 }
             }
 
         player.sendMessage(Component.text("\uD83D\uDCA5 Rage Aura unleashed!", NamedTextColor.RED))
+        return true
     }
 }
 

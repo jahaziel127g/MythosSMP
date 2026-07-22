@@ -49,11 +49,11 @@ class CooldownService(private val plugin: MythosSMP) {
         player.sendActionBar(msg)
     }
 
-    fun sendOnCooldownMessage(player: Player, abilityKey: String) {
+    fun sendOnCooldownMessage(player: Player, abilityKey: String, displayName: String) {
         val remaining = getRemainingSeconds(player, abilityKey)
         player.sendMessage(Component.text()
             .append(Component.text("\u26A0 ", NamedTextColor.RED))
-            .append(Component.text(abilityKey, NamedTextColor.GOLD))
+            .append(Component.text(displayName, NamedTextColor.GOLD))
             .append(Component.text(" is on cooldown for ", NamedTextColor.RED))
             .append(Component.text("${remaining}s", NamedTextColor.YELLOW))
             .append(Component.text(".", NamedTextColor.RED))
