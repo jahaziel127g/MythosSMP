@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.2.0 — 2026-07-22
+
+### Phase 3: Trial Engine
+- Trial state machine: `INACTIVE → SUMMONING → ACTIVE → COMPLETED/FAILED`
+- `TrialService` with 1-second tick loop managing active sessions
+- Wave-based mob spawning with party and wave scaling
+- `MobScalingFormula`: health = base × partyMult × waveMult
+- `GeoBoundary` cuboid containment with teleport-back enforcement
+- `ScrollItemRegistry` — custom scroll items via PersistentDataContainer
+- ActionBar coordinate broadcasts every 10s, per-wave timeout (120s)
+- `/trial start|info|leave|give` commands
+- `/vow accept` now requires completing the matching trial first
+- `mythos_completed_trials` table in SQLite schema
+
+### Fixes
+- DDD refactor: 22 files moved into presentation/application/domain/infrastructure layers
+- Cooldown display bug: wrong lookup key showed 0s remaining
+- Cooldown gate bug: cooldown was set even when ability returned false
+- Trial state crash: `ACTIVE → ACTIVE` transition on wave advance
+- Mobs suffocating in floor: Y offset moved to surface + 1
+- Replace Wolf and IronGolem with naturally player-hostile mobs (Creeper, Vindicator, Evoker)
+
 ## 1.0.0 — 2026-07-17
 
 ### Phase 2: Core Framework
