@@ -87,9 +87,49 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
             return
         }
 
-        player.sendMessage(Component.text(
-            "Vow acceptance requires completing a Trial. This feature will be implemented in Phase 3.",
-            NamedTextColor.YELLOW
+        val vowKey = args[1].lowercase()
+        val vow = plugin.vowRegistry.getVow(vowKey)
+        if (vow == null) {
+            player.sendMessage(Component.text("Unknown vow: $vowKey", NamedTextColor.RED))
+            return
+        }
+
+        if (!plugin.trialService.hasCompletedTrial(player.uniqueId, vowKey)) {
+            player.sendMessage(miniMessage.deserialize(
+                "<red>You must complete the <gold>${vow.displayName}</gold> trial first! " +
+                "Use <yellow>/trial give $vowKey</yellow> to obtain a trial scroll.</red>"
+            ))
+            return
+        }
+
+        val profile = plugin.profileService.getProfile(player.uniqueId) ?: run {
+            player.sendMessage(Component.text("Profile not loaded.", NamedTextColor.RED))
+            return
+        }
+
+        val oldActiveKey = profile.activeVow
+        if (oldActiveKey != null) {
+            val oldVow = plugin.vowRegistry.getVowByActiveKey(oldActiveKey)
+            oldVow?.passiveEffects?.forEach { it.remove(player) }
+            oldVow?.curse?.remove(player)
+        }
+
+        val normalizeKey = plugin.vowRegistry.normalizeActiveKey(vowKey)
+        if (profile.activeVow == normalizeKey) {
+            player.sendMessage(Component.text("You already have this vow active.", NamedTextColor.YELLOW))
+            return
+        }
+
+        plugin.profileService.updateProfile(player.uniqueId) {
+            it.copy(activeVow = normalizeKey, dirty = true)
+        }
+
+        vow.passiveEffects.forEach { it.apply(player) }
+        vow.curse.apply(player)
+
+        player.sendMessage(miniMessage.deserialize(
+            "<green>You have accepted the <gold>${vow.displayName}</gold> vow! " +
+            "May the gods favor you.</green>"
         ))
     }
 

@@ -40,6 +40,16 @@ object TableSchema {
         CREATE INDEX IF NOT EXISTS idx_trust_player ON mythos_trusts(player_uuid)
     """
 
+    const val COMPLETED_TRIALS_TABLE = """
+        CREATE TABLE IF NOT EXISTS mythos_completed_trials (
+            player_uuid VARCHAR(36) NOT NULL,
+            trial_key VARCHAR(32) NOT NULL,
+            completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (player_uuid, trial_key),
+            FOREIGN KEY (player_uuid) REFERENCES mythos_players(player_uuid) ON DELETE CASCADE
+        )
+    """
+
     const val UNION_INDEX = """
         CREATE INDEX IF NOT EXISTS idx_unions_lookup ON mythos_unions(party_a_uuid, party_b_uuid)
     """

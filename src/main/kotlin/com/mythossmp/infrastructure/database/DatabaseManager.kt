@@ -42,6 +42,7 @@ class DatabaseManager(private val plugin: MythosSMP) {
                 executeUpdate(TableSchema.PLAYERS_TABLE)
                 executeUpdate(TableSchema.TRUSTS_TABLE)
                 executeUpdate(TableSchema.UNIONS_TABLE)
+                executeUpdate(TableSchema.COMPLETED_TRIALS_TABLE)
                 executeUpdate(TableSchema.PLAYER_INDEX)
                 executeUpdate(TableSchema.TRUST_INDEX)
                 executeUpdate(TableSchema.UNION_INDEX)

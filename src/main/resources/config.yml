@@ -3,4 +3,33 @@ database:
   pool-size: 4
   max-backups: 5
 
+trials:
+  ares:
+    display-name: "Ares"
+    vow-key: "ares"
+    description: "Prove your worth to the God of War"
+    time-limit-seconds: 600
+    max-party-size: 4
+    base-health: 40.0
+    base-damage: 6.0
+    waves:
+      - wave-number: 1
+        mobs:
+          - type: ZOMBIE
+            count: 4
+          - type: SPIDER
+            count: 2
+      - wave-number: 2
+        mobs:
+          - type: SKELETON
+            count: 4
+          - type: WOLF
+            count: 3
+      - wave-number: 3
+        mobs:
+          - type: IRON_GOLEM
+            count: 2
+          - type: ZOMBIE
+            count: 2
+
 debug: false
