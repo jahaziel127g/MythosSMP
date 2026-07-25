@@ -2,21 +2,28 @@ package com.mythossmp
 
 import com.mythossmp.application.ability.AbilityExecutor
 import com.mythossmp.application.ability.CooldownService
+import com.mythossmp.application.combat.CombatService
 import com.mythossmp.application.profile.ProfileService
 import com.mythossmp.application.trial.TrialService
+import com.mythossmp.application.trust.TrustService
+import com.mythossmp.application.union.UnionService
+import com.mythossmp.domain.trial.MobSpawnEntry
 import com.mythossmp.domain.trial.TrialConfig
 import com.mythossmp.domain.trial.WaveConfig
-import com.mythossmp.domain.trial.MobSpawnEntry
 import com.mythossmp.domain.vow.AresListeners
 import com.mythossmp.domain.vow.VowAres
 import com.mythossmp.domain.vow.VowRegistry
 import com.mythossmp.infrastructure.config.ConfigManager
 import com.mythossmp.infrastructure.database.DatabaseManager
+import com.mythossmp.infrastructure.database.InMemoryTrustRepository
+import com.mythossmp.infrastructure.database.InMemoryUnionRepository
 import com.mythossmp.infrastructure.database.SqlProfileRepository
 import com.mythossmp.infrastructure.trial.ScrollItemRegistry
 import com.mythossmp.presentation.command.CommandRegistry
 import com.mythossmp.presentation.display.StatusDisplay
+import com.mythossmp.presentation.listener.CombatListener
 import com.mythossmp.presentation.listener.TrialListener
+import com.mythossmp.presentation.listener.UnionListener
 import kotlinx.coroutines.runBlocking
 import org.bukkit.entity.EntityType
 import org.bukkit.plugin.java.JavaPlugin
@@ -28,6 +35,12 @@ class MythosSMP : JavaPlugin() {
     lateinit var databaseManager: DatabaseManager
         private set
     lateinit var profileService: ProfileService
+        private set
+    lateinit var trustService: TrustService
+        private set
+    lateinit var unionService: UnionService
+        private set
+    lateinit var combatService: CombatService
         private set
     lateinit var commandRegistry: CommandRegistry
         private set
@@ -55,6 +68,12 @@ class MythosSMP : JavaPlugin() {
 
         val profileRepository = SqlProfileRepository(databaseManager)
         profileService = ProfileService(this, profileRepository)
+
+        val trustRepository = InMemoryTrustRepository()
+        val unionRepository = InMemoryUnionRepository()
+        trustService = TrustService(this, trustRepository)
+        unionService = UnionService(this, unionRepository, profileRepository)
+        combatService = CombatService(trustService, unionService)
 
         vowRegistry = VowRegistry(this)
         cooldownService = CooldownService(this)
@@ -119,6 +138,8 @@ class MythosSMP : JavaPlugin() {
         server.pluginManager.registerEvents(VowAres.passive, this)
         server.pluginManager.registerEvents(VowAres.curseInstance, this)
         server.pluginManager.registerEvents(AresListeners(), this)
+        server.pluginManager.registerEvents(CombatListener(combatService), this)
+        server.pluginManager.registerEvents(UnionListener(unionService), this)
         server.pluginManager.registerEvents(TrialListener(this), this)
     }
 

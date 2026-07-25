@@ -166,18 +166,7 @@ class RageAura : ActiveAbility {
             Particle.DustOptions(Color.fromRGB(0xFF0000), 2.0f)
         )
 
-        val trusted = mythosPlugin.databaseManager.getConnection().use { conn ->
-            conn.prepareStatement(
-                "SELECT trusted_uuid FROM mythos_trusts WHERE player_uuid = ?"
-            ).use { stmt ->
-                stmt.setString(1, player.uniqueId.toString())
-                stmt.executeQuery().use { rs ->
-                    val set = mutableSetOf<UUID>()
-                    while (rs.next()) set.add(UUID.fromString(rs.getString("trusted_uuid")))
-                    set
-                }
-            }
-        }
+        val trusted = mythosPlugin.trustService.getTrusted(player.uniqueId).toSet()
 
         player.world.getNearbyEntities(player.location, radius, radius, radius)
             .filterIsInstance<LivingEntity>()

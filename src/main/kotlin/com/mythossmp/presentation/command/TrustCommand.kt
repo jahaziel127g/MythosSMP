@@ -10,8 +10,6 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import java.sql.SQLException
-import java.util.UUID
 
 class TrustCommand(private val plugin: MythosSMP) : CommandExecutor {
 
@@ -55,29 +53,13 @@ class TrustCommand(private val plugin: MythosSMP) : CommandExecutor {
             return
         }
 
-        try {
-            plugin.databaseManager.getConnection().use { conn ->
-                conn.prepareStatement(
-                    "INSERT OR IGNORE INTO mythos_trusts (player_uuid, trusted_uuid) VALUES (?, ?)"
-                ).use { stmt ->
-                    stmt.setString(1, player.uniqueId.toString())
-                    stmt.setString(2, target.uniqueId.toString())
-                    val rows = stmt.executeUpdate()
-                    if (rows > 0) {
-                        player.sendMessage(miniMessage.deserialize(
-                            "<green>Trusted <gold>${target.name}</gold>.</green>"
-                        ))
-                    } else {
-                        player.sendMessage(Component.text(
-                            "Already trusted: ${target.name}",
-                            NamedTextColor.YELLOW
-                        ))
-                    }
-                }
-            }
-        } catch (e: SQLException) {
-            player.sendMessage(Component.text("Database error while adding trust.", NamedTextColor.RED))
-            plugin.logger.severe("Trust add error: ${e.message}")
+        val added = plugin.trustService.addTrust(player.uniqueId, target.uniqueId)
+        if (added) {
+            player.sendMessage(miniMessage.deserialize(
+                "<green>Trusted <gold>${target.name}</gold>.</green>"
+            ))
+        } else {
+            player.sendMessage(Component.text("Already trusted: ${target.name}", NamedTextColor.YELLOW))
         }
     }
 
@@ -103,65 +85,34 @@ class TrustCommand(private val plugin: MythosSMP) : CommandExecutor {
         val targetUuid = target.uniqueId
         val targetName = target.name ?: args[1]
 
-        try {
-            plugin.databaseManager.getConnection().use { conn ->
-                conn.prepareStatement(
-                    "DELETE FROM mythos_trusts WHERE player_uuid = ? AND trusted_uuid = ?"
-                ).use { stmt ->
-                    stmt.setString(1, player.uniqueId.toString())
-                    stmt.setString(2, targetUuid.toString())
-                    val rows = stmt.executeUpdate()
-                    if (rows > 0) {
-                        player.sendMessage(miniMessage.deserialize(
-                            "<green>Removed <gold>${targetName}</gold> from your trust list.</green>"
-                        ))
-                    } else {
-                        player.sendMessage(Component.text(
-                            "${targetName} was not in your trust list.",
-                            NamedTextColor.YELLOW
-                        ))
-                    }
-                }
-            }
-        } catch (e: SQLException) {
-            player.sendMessage(Component.text("Database error while removing trust.", NamedTextColor.RED))
-            plugin.logger.severe("Trust remove error: ${e.message}")
+        val removed = plugin.trustService.removeTrust(player.uniqueId, targetUuid)
+        if (removed) {
+            player.sendMessage(miniMessage.deserialize(
+                "<green>Removed <gold>${targetName}</gold> from your trust list.</green>"
+            ))
+        } else {
+            player.sendMessage(Component.text(
+                "${targetName} was not in your trust list.",
+                NamedTextColor.YELLOW
+            ))
         }
     }
 
     private fun handleList(player: Player) {
-        try {
-            plugin.databaseManager.getConnection().use { conn ->
-                conn.prepareStatement(
-                    "SELECT trusted_uuid FROM mythos_trusts WHERE player_uuid = ?"
-                ).use { stmt ->
-                    stmt.setString(1, player.uniqueId.toString())
-                    stmt.executeQuery().use { rs ->
-                        val trusted = mutableListOf<String>()
-                        while (rs.next()) {
-                            val uuid = UUID.fromString(rs.getString("trusted_uuid"))
-                            val name = Bukkit.getOfflinePlayer(uuid).name ?: uuid.toString().take(8)
-                            trusted.add(name)
-                        }
+        val trusted = plugin.trustService.getTrusted(player.uniqueId)
 
-                        if (trusted.isEmpty()) {
-                            player.sendMessage(Component.text("You have no trusted players.", NamedTextColor.GRAY))
-                        } else {
-                            player.sendMessage(miniMessage.deserialize(
-                                "<dark_aqua>=== Trusted Players ===</dark_aqua>"
-                            ))
-                            trusted.forEach { name ->
-                                player.sendMessage(miniMessage.deserialize(
-                                    "<gray>- <white>$name</white></gray>"
-                                ))
-                            }
-                        }
-                    }
-                }
+        if (trusted.isEmpty()) {
+            player.sendMessage(Component.text("You have no trusted players.", NamedTextColor.GRAY))
+        } else {
+            player.sendMessage(miniMessage.deserialize(
+                "<dark_aqua>=== Trusted Players ===</dark_aqua>"
+            ))
+            trusted.forEach { uuid ->
+                val name = Bukkit.getOfflinePlayer(uuid).name ?: uuid.toString().take(8)
+                player.sendMessage(miniMessage.deserialize(
+                    "<gray>- <white>$name</white></gray>"
+                ))
             }
-        } catch (e: SQLException) {
-            player.sendMessage(Component.text("Database error while listing trusts.", NamedTextColor.RED))
-            plugin.logger.severe("Trust list error: ${e.message}")
         }
     }
 

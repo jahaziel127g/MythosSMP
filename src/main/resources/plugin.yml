@@ -21,6 +21,10 @@ commands:
     description: Activate your second Vow ability
     usage: /<command>
     aliases: [a2, ab2]
+  union:
+    description: Seal of Union management
+    usage: /<command> [create|break|info]
+    aliases: [unions]
   trial:
     description: Trial management commands
     usage: /<command> [start|info|leave|give]
