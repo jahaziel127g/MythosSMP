@@ -7,9 +7,10 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 
-class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
+class VowCommand(private val plugin: MythosSMP) : CommandExecutor, TabCompleter {
 
     private val miniMessage = MiniMessage.miniMessage()
 
@@ -178,6 +179,18 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor {
         player.sendMessage(miniMessage.deserialize(
             "<green>Test mode: <gold>${vow.displayName}</gold> vow activated. Passives applied.</green>"
         ))
+    }
+
+    override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<out String>): List<String>? {
+        if (args.size == 1) {
+            return listOf("info", "list", "accept", "abilities", "test")
+                .filter { it.startsWith(args[0].lowercase()) }
+        }
+        if (args.size == 2 && args[0].lowercase() in listOf("accept", "test")) {
+            return plugin.vowRegistry.getAllVows().map { it.key }
+                .filter { it.startsWith(args[1].lowercase()) }
+        }
+        return emptyList()
     }
 
     private fun sendUsage(player: Player) {

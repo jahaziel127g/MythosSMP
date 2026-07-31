@@ -9,9 +9,10 @@ import org.bukkit.OfflinePlayer
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 
-class TrustCommand(private val plugin: MythosSMP) : CommandExecutor {
+class TrustCommand(private val plugin: MythosSMP) : CommandExecutor, TabCompleter {
 
     private val miniMessage = MiniMessage.miniMessage()
 
@@ -114,6 +115,17 @@ class TrustCommand(private val plugin: MythosSMP) : CommandExecutor {
                 ))
             }
         }
+    }
+
+    override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<out String>): List<String>? {
+        if (args.size == 1) {
+            return listOf("add", "remove", "list")
+                .filter { it.startsWith(args[0].lowercase()) }
+        }
+        if (args.size == 2 && args[0].lowercase() in listOf("add", "remove")) {
+            return null
+        }
+        return emptyList()
     }
 
     private fun sendUsage(player: Player) {

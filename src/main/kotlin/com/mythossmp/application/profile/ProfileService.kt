@@ -1,6 +1,7 @@
 package com.mythossmp.application.profile
 
 import com.mythossmp.MythosSMP
+import com.mythossmp.application.task.Scheduler
 import com.mythossmp.domain.model.PlayerProfile
 import com.mythossmp.domain.vow.Bloodthorns
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +18,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 class ProfileService(
     private val plugin: MythosSMP,
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val scheduler: Scheduler
 ) : Listener {
 
     private val cache: ConcurrentHashMap<UUID, PlayerProfile> = ConcurrentHashMap()
@@ -84,7 +86,8 @@ class ProfileService(
             }
 
             if (profile.dirty) {
-                saveProfileSync(profile)
+                val snapshot = profile
+                scheduler.async { saveProfileSync(snapshot) }
             }
         }
 

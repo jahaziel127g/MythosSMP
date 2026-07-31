@@ -8,9 +8,13 @@ A production-grade Kotlin/Paper 1.21.11 Minecraft plugin featuring mythological 
 |-------|-----------|--------|
 | 1 | Foundation — Gradle, DB schema, profile caching, /vow & /trust commands | ✅ Complete |
 | 2 | Core Framework — Vow/Ability abstractions, cooldowns, custom events, Vow of Ares | ✅ Complete |
-| 3 | Trial Engine — Scrolls, state machines, mob waves, coordinate broadcasts | ⏳ Pending |
-| 4 | Multiplayer — Trust system AOE checks, Seal of Union | ⏳ Pending |
-| 5 | God Expansion — All 14 Vow mechanics, YAML configs, particles | ⏳ Pending |
+| 3 | Trial Engine — Scrolls, state machines, mob waves, coordinate broadcasts | ✅ Complete |
+| 4 | Multiplayer — Trust system AOE checks, Seal of Union | ✅ Complete |
+| 5 | God Expansion — All 14 Vow mechanics, YAML configs, particles | 🔄 In Progress |
+|   | ├ Auto-validating Vow YAML config | ✅ Complete |
+|   | ├ Vow of Ares (War) | ✅ Complete |
+|   | ├ Vow of Loki (Trickster) | ✅ Complete |
+|   | └ Remaining 12 Vows | ⏳ Pending |
 | 6 | QA & Security — Pen testing, combat logging, duplication prevention | ⏳ Pending |
 | 7 | Optimization & Launch — World borders, Paper tuning, 48h beta | ⏳ Pending |
 

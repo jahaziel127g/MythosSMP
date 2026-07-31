@@ -10,7 +10,7 @@ trials:
     description: "Prove your worth to the God of War"
     time-limit-seconds: 600
     max-party-size: 4
-    base-health: 40.0
+    base-health: 60.0
     base-damage: 6.0
     waves:
       - wave-number: 1
@@ -31,5 +31,95 @@ trials:
             count: 3
           - type: EVOKER
             count: 1
+  loki:
+    display-name: "Loki"
+    vow-key: "loki"
+    description: "Outwit the God of Mischief"
+    time-limit-seconds: 600
+    max-party-size: 4
+    base-health: 45.0
+    base-damage: 5.0
+    waves:
+      - wave-number: 1
+        mobs:
+          - type: SPIDER
+            count: 3
+          - type: CREEPER
+            count: 2
+      - wave-number: 2
+        mobs:
+          - type: SKELETON
+            count: 4
+          - type: SPIDER
+            count: 3
+      - wave-number: 3
+        mobs:
+          - type: VEX
+            count: 3
+          - type: CREEPER
+            count: 3
+  hades:
+    display-name: "Hades"
+    vow-key: "hades"
+    description: "Survive the depths of the Underworld"
+    time-limit-seconds: 600
+    max-party-size: 4
+    base-health: 65.0
+    base-damage: 6.5
+    waves:
+      - wave-number: 1
+        mobs:
+          - type: ZOMBIE
+            count: 4
+          - type: SKELETON
+            count: 2
+      - wave-number: 2
+        mobs:
+          - type: WITHER_SKELETON
+            count: 3
+          - type: SKELETON
+            count: 3
+      - wave-number: 3
+        mobs:
+          - type: BLAZE
+            count: 2
+          - type: WITHER_SKELETON
+            count: 4
+
+vows:
+  zeus:
+    enabled: true
+    static-charge-per-block: 0.01
+    conductive-multiplier: 1.2
+    static-strike-damage: 5.0
+  loki:
+    enabled: true
+    curse:
+      health-reduction: 4.0
+    passive:
+      backstab-dot-threshold: 0.75
+      backstab-multiplier: 2.5
+    abilities:
+      shadow-step:
+        cooldown: 25
+        range: 15.0
+      veil-of-lies:
+        cooldown: 45
+        duration: 10.0
+        first-hit-multiplier: 3.0
+  hades:
+    enabled: true
+    curse:
+      health-reduction: 4.0
+    passive:
+      max-charges: 5
+      damage-bonus-per-charge: 0.1
+    abilities:
+      death-defiance:
+        cooldown: 90
+      soul-burst:
+        cooldown: 30
+        range: 8.0
+        base-damage: 4.0
 
 debug: false

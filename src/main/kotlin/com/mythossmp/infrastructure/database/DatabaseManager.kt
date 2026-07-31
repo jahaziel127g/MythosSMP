@@ -1,20 +1,24 @@
 package com.mythossmp.infrastructure.database
 
 import com.mythossmp.MythosSMP
+import com.mythossmp.infrastructure.config.ConfigManager
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import java.io.File
 import java.sql.Connection
 import java.sql.SQLException
 
-class DatabaseManager(private val plugin: MythosSMP) {
+class DatabaseManager(
+    private val plugin: MythosSMP,
+    private val configManager: ConfigManager
+) {
 
     private var dataSource: HikariDataSource? = null
     private var isShutdown = false
 
     fun initialize() {
-        val dbPath = plugin.configManager.getDatabasePath()
-        val poolSize = plugin.configManager.getPoolSize()
+        val dbPath = configManager.getDatabasePath()
+        val poolSize = configManager.getPoolSize()
 
         val dbFile = File(dbPath)
         dbFile.parentFile?.mkdirs()

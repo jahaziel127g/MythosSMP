@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "1.9.22"
     id("com.gradleup.shadow") version "8.3.6"
+    id("xyz.jpenilla.run-paper") version "2.3.1"
 }
 
 group = "com.mythossmp"
@@ -23,6 +24,61 @@ dependencies {
 
     compileOnly("net.kyori:adventure-api:4.17.0")
     compileOnly("net.kyori:adventure-text-minimessage:4.17.0")
+
+    testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
+}
+
+sourceSets {
+    create("testIntegration") {
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output
+    }
+}
+
+dependencies {
+    "testIntegrationImplementation"(platform("org.junit:junit-bom:5.10.2"))
+    "testIntegrationImplementation"("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    "testIntegrationImplementation"("org.junit.jupiter:junit-jupiter")
+    "testIntegrationImplementation"("org.mockito:mockito-core:5.11.0")
+    "testIntegrationImplementation"("org.mockito.kotlin:mockito-kotlin:5.3.1")
+    "testIntegrationImplementation"("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.110.0") {
+        exclude("org.junit.jupiter")
+    }
+    "testIntegrationImplementation"("com.zaxxer:HikariCP:5.1.0")
+    "testIntegrationImplementation"("org.xerial:sqlite-jdbc:3.45.3.0")
+    "testIntegrationImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    "testIntegrationRuntimeOnly"("org.junit.platform:junit-platform-launcher")
+}
+
+val integrationTest = tasks.register<Test>("integrationTest") {
+    description = "Runs integration tests against a bootstrapped Paper server"
+    group = "verification"
+    testClassesDirs = sourceSets["testIntegration"].output.classesDirs
+    classpath = sourceSets["testIntegration"].runtimeClasspath
+    shouldRunAfter(tasks.test)
+    useJUnitPlatform()
+}
+
+val stressTest = tasks.register<Test>("stressTest") {
+    description = "Runs high-load stress tests against a bootstrapped Paper server"
+    group = "verification"
+    testClassesDirs = sourceSets["testIntegration"].output.classesDirs
+    classpath = sourceSets["testIntegration"].runtimeClasspath
+    filter { includeTestsMatching("com.mythossmp.stress.*") }
+    shouldRunAfter(tasks.test)
+    useJUnitPlatform()
+}
+
+tasks.check {
+    dependsOn(integrationTest)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 java {
@@ -42,6 +98,17 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 }
 
 tasks {
+    runServer {
+        minecraftVersion("1.21.1")
+        doFirst {
+            val propsFile = runDirectory.get().asFile.resolve("server.properties")
+            if (!propsFile.exists()) {
+                propsFile.parentFile.mkdirs()
+                propsFile.writeText("online-mode=false\nspawn-protection=0\nview-distance=8\n")
+            }
+        }
+    }
+
     shadowJar {
         archiveClassifier.set("")
         archiveFileName.set("MythosSMP-${version}.jar")

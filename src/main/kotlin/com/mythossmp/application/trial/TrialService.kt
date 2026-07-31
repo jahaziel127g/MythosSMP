@@ -1,6 +1,9 @@
 package com.mythossmp.application.trial
 
 import com.mythossmp.MythosSMP
+import com.mythossmp.application.task.Cancellable
+import com.mythossmp.application.task.Scheduler
+import com.mythossmp.domain.event.TrialCompletedEvent
 import com.mythossmp.domain.trial.GeoBoundary
 import com.mythossmp.domain.trial.MobScalingFormula
 import com.mythossmp.domain.trial.TrialConfig
@@ -11,6 +14,7 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.title.Title
 import org.bukkit.Location
+import org.bukkit.Particle
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
@@ -19,13 +23,20 @@ import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-class TrialService(private val plugin: MythosSMP) {
+class TrialService(
+    private val plugin: MythosSMP,
+    private val scheduler: Scheduler
+) {
 
     private val sessions = ConcurrentHashMap<UUID, TrialSession>()
     private val mobToSession = ConcurrentHashMap<UUID, UUID>()
     private val completedTrials = mutableSetOf<String>()
-    private var tickTaskId: Int? = null
+    private var tickTask: Cancellable? = null
     private val defaultConfigs = mutableMapOf<String, TrialConfig>()
+
+    private companion object {
+        const val MAX_CUSTOM_ENTITIES = 25
+    }
 
     fun registerDefaultConfig(config: TrialConfig) {
         defaultConfigs[config.key] = config
@@ -36,12 +47,12 @@ class TrialService(private val plugin: MythosSMP) {
     fun getAllDefaultConfigs(): Collection<TrialConfig> = defaultConfigs.values
 
     fun start() {
-        tickTaskId = plugin.server.scheduler.runTaskTimer(plugin, Runnable { tick() }, 20L, 20L).taskId
+        tickTask = scheduler.repeat(Duration.ofSeconds(1)) { tick() }
         plugin.logger.info("TrialService started with ${defaultConfigs.size} trial configs")
     }
 
     fun stop() {
-        tickTaskId?.let { plugin.server.scheduler.cancelTask(it) }
+        tickTask?.cancel()
         sessions.values.forEach { cleanupSession(it) }
         sessions.clear()
         mobToSession.clear()
@@ -62,8 +73,9 @@ class TrialService(private val plugin: MythosSMP) {
         val loc = initiator.location
         val boundary = GeoBoundary(
             worldName = loc.world?.name ?: "world",
-            minX = loc.blockX - 20, minY = loc.blockY - 5, minZ = loc.blockZ - 20,
-            maxX = loc.blockX + 20, maxY = loc.blockY + 10, maxZ = loc.blockZ + 20
+            centerX = loc.blockX, centerZ = loc.blockZ,
+            radius = 20,
+            minY = loc.blockY - 5, maxY = loc.blockY + 10
         )
 
         val session = TrialSession(
@@ -130,8 +142,14 @@ class TrialService(private val plugin: MythosSMP) {
         val world = session.location.world ?: return
         val b = session.boundary
 
-        val x = b.minX + (Math.random() * (b.maxX - b.minX + 1)).toInt()
-        val z = b.minZ + (Math.random() * (b.maxZ - b.minZ + 1)).toInt()
+        val scanCenter = Location(world, b.centerX + 0.5, b.centerY() + 0.5, b.centerZ + 0.5)
+        val scanExtent = b.radius + 2.0
+        val scanHeight = ((b.maxY - b.minY) / 2.0) + 2.0
+        val activeNearby = world.getNearbyEntities(scanCenter, scanExtent, scanHeight, scanExtent)
+            .count { isTrialMob(it.uniqueId) }
+        if (activeNearby >= MAX_CUSTOM_ENTITIES) return
+
+        val (x, z) = b.randomSpawnXZ()
         val y = world.getHighestBlockYAt(x, z).coerceIn(b.minY, b.maxY)
 
         val loc = Location(world, x + 0.5, y + 1.0, z + 0.5)
@@ -187,6 +205,12 @@ class TrialService(private val plugin: MythosSMP) {
         session.party.forEach { uuid ->
             completedTrials.add("$uuid:${session.trialConfig.key}")
         }
+
+        plugin.server.pluginManager.callEvent(TrialCompletedEvent(
+            playerUuid = session.initiatorUuid,
+            trialKey = session.trialConfig.key,
+            displayName = session.trialConfig.displayName
+        ))
 
         announceToParty(session, Component.text()
             .append(Component.text("\u2728 ", NamedTextColor.GOLD))
@@ -293,6 +317,10 @@ class TrialService(private val plugin: MythosSMP) {
 
         checkBoundaries(session)
 
+        if (elapsed % 2 == 0L) {
+            showBoundaryParticles(session)
+        }
+
         if (elapsed % 10 == 0L) {
             broadcastCoords(session)
         }
@@ -312,6 +340,7 @@ class TrialService(private val plugin: MythosSMP) {
     }
 
     private fun checkBoundaries(session: TrialSession) {
+        val world = session.location.world
         for (uuid in session.allPlayers()) {
             val player = plugin.server.getPlayer(uuid) ?: continue
             if (!player.isOnline) continue
@@ -319,19 +348,26 @@ class TrialService(private val plugin: MythosSMP) {
 
             player.sendMessage(Component.text("\u26A0 You are leaving the trial area!", NamedTextColor.RED))
 
-            val cx = session.boundary.centerX()
-            val cz = session.boundary.centerZ()
-            val world = player.world
-            val safeY = world.getHighestBlockYAt(cx, cz).coerceAtLeast(session.boundary.minY)
-            val center = Location(world, cx + 0.5, safeY.toDouble(), cz + 0.5)
+            val cx = session.boundary.centerX
+            val cz = session.boundary.centerZ
+            val safeY = world?.getHighestBlockYAt(cx, cz)?.coerceAtLeast(session.boundary.minY) ?: session.boundary.minY
+            val center = Location(world ?: player.world, cx + 0.5, safeY.toDouble(), cz + 0.5)
             player.teleport(center)
+        }
+        if (world == null) return
+        for (mobUuid in session.spawnedMobs) {
+            val entity = world.getEntity(mobUuid) as? LivingEntity ?: continue
+            if (session.boundary.contains(entity.location)) continue
+            val (x, z) = session.boundary.randomSpawnXZ()
+            val y = world.getHighestBlockYAt(x, z).coerceIn(session.boundary.minY, session.boundary.maxY)
+            entity.teleport(Location(world, x + 0.5, y + 1.0, z + 0.5))
         }
     }
 
     private fun broadcastCoords(session: TrialSession) {
-        val cx = session.boundary.centerX()
+        val cx = session.boundary.centerX
         val cy = session.boundary.centerY()
-        val cz = session.boundary.centerZ()
+        val cz = session.boundary.centerZ
         val msg = Component.text()
             .append(Component.text("\uD83D\uDCCD Trial Center: ", NamedTextColor.GOLD))
             .append(Component.text("$cx, $cy, $cz", NamedTextColor.WHITE))
@@ -341,6 +377,15 @@ class TrialService(private val plugin: MythosSMP) {
         for (uuid in session.allPlayers()) {
             val player = plugin.server.getPlayer(uuid) ?: continue
             player.sendActionBar(msg)
+        }
+    }
+
+    private fun showBoundaryParticles(session: TrialSession) {
+        val world = session.location.world ?: return
+        val b = session.boundary
+        for ((x, z) in b.circumferencePoints(24)) {
+            world.spawnParticle(Particle.SCULK_SOUL, x, b.minY + 0.5, z, 1, 0.0, 0.0, 0.0, 0.01)
+            world.spawnParticle(Particle.SCULK_SOUL, x, b.maxY + 0.5, z, 1, 0.0, 0.0, 0.0, 0.01)
         }
     }
 

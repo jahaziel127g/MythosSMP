@@ -9,11 +9,12 @@ import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 import java.time.Duration
 import java.time.Instant
 
-class UnionCommand(private val plugin: MythosSMP) : CommandExecutor {
+class UnionCommand(private val plugin: MythosSMP) : CommandExecutor, TabCompleter {
 
     private val miniMessage = MiniMessage.miniMessage()
 
@@ -111,6 +112,17 @@ class UnionCommand(private val plugin: MythosSMP) : CommandExecutor {
             <gray>Formed:</gray> <white>${age.seconds / 60}m ${age.seconds % 60}s ago</white>
             """.trimIndent()
         ))
+    }
+
+    override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<out String>): List<String>? {
+        if (args.size == 1) {
+            return listOf("create", "break", "info")
+                .filter { it.startsWith(args[0].lowercase()) }
+        }
+        if (args.size == 2 && args[0].lowercase() == "create") {
+            return null
+        }
+        return emptyList()
     }
 
     private fun sendUsage(player: Player) {

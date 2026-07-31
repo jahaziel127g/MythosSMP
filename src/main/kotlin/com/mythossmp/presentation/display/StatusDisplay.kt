@@ -1,24 +1,31 @@
 package com.mythossmp.presentation.display
 
 import com.mythossmp.MythosSMP
+import com.mythossmp.application.task.Cancellable
+import com.mythossmp.application.task.Scheduler
 import com.mythossmp.domain.vow.VowAres
+import com.mythossmp.domain.vow.VowHades
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.scoreboard.DisplaySlot
 import org.bukkit.scoreboard.RenderType
+import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-class StatusDisplay(private val plugin: MythosSMP) {
+class StatusDisplay(
+    private val plugin: MythosSMP,
+    private val scheduler: Scheduler
+) {
 
-    private var taskId: Int? = null
+    private var tickTask: Cancellable? = null
     private val boards = ConcurrentHashMap<UUID, org.bukkit.scoreboard.Scoreboard>()
     private val prevEntries = ConcurrentHashMap<UUID, List<String>>()
 
     fun start() {
-        taskId = plugin.server.scheduler.runTaskTimer(plugin, Runnable { tick() }, 20L, 40L).taskId
+        tickTask = scheduler.repeat(Duration.ofSeconds(2)) { tick() }
         plugin.logger.info("StatusDisplay started")
     }
 
@@ -27,6 +34,8 @@ class StatusDisplay(private val plugin: MythosSMP) {
         val activeKey = profile.activeVow ?: return
         when (activeKey) {
             "ares" -> updateAresActionBar(player)
+            "loki" -> updateLokiActionBar(player)
+            "hades" -> updateHadesActionBar(player)
         }
         if (player.isOp) {
             updateDevSidebar(player, activeKey)
@@ -34,7 +43,7 @@ class StatusDisplay(private val plugin: MythosSMP) {
     }
 
     fun stop() {
-        taskId?.let { plugin.server.scheduler.cancelTask(it) }
+        tickTask?.cancel()
         boards.clear()
         prevEntries.clear()
     }
@@ -46,6 +55,8 @@ class StatusDisplay(private val plugin: MythosSMP) {
 
             when (activeKey) {
                 "ares" -> updateAresActionBar(player)
+                "loki" -> updateLokiActionBar(player)
+                "hades" -> updateHadesActionBar(player)
             }
 
             if (player.isOp) {
@@ -81,6 +92,66 @@ class StatusDisplay(private val plugin: MythosSMP) {
             .append(ra)
             .build()
         )
+    }
+
+    private fun updateLokiActionBar(player: Player) {
+        val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "loki-shadow-step")
+        val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "loki-veil-of-lies")
+
+        val ss = if (cd1 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd1), NamedTextColor.RED)
+        val vl = if (cd2 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd2), NamedTextColor.RED)
+
+        player.sendActionBar(Component.text()
+            .append(Component.text("\uD83D\uDCAB ", NamedTextColor.LIGHT_PURPLE))
+            .append(Component.text("SS:", NamedTextColor.GRAY))
+            .append(ss)
+            .append(Component.text("  ", NamedTextColor.DARK_GRAY))
+            .append(Component.text("VL:", NamedTextColor.GRAY))
+            .append(vl)
+            .build()
+        )
+    }
+
+    private fun updateHadesActionBar(player: Player) {
+        val charges = VowHades.getCharges(player.uniqueId)
+        val maxCharges = VowHades.getMaxCharges()
+        val bar = buildSoulBar(charges, maxCharges)
+
+        val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "hades-death-defiance")
+        val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "hades-soul-burst")
+
+        val dd = if (cd1 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd1), NamedTextColor.RED)
+        val sb = if (cd2 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd2), NamedTextColor.RED)
+
+        player.sendActionBar(Component.text()
+            .append(Component.text("Soul ", NamedTextColor.GRAY))
+            .append(bar)
+            .append(Component.text(" $charges/$maxCharges", NamedTextColor.DARK_GREEN))
+            .append(Component.text("  \u23F1 ", NamedTextColor.DARK_GRAY))
+            .append(Component.text("DD:", NamedTextColor.GRAY))
+            .append(dd)
+            .append(Component.text("  ", NamedTextColor.DARK_GRAY))
+            .append(Component.text("SB:", NamedTextColor.GRAY))
+            .append(sb)
+            .build()
+        )
+    }
+
+    private fun buildSoulBar(charges: Int, max: Int): Component {
+        val filled = charges.coerceIn(0, max)
+        val empty = max - filled
+        val bar = "\u2588".repeat(filled) + "\u2591".repeat(empty)
+        val color = when {
+            charges >= max -> NamedTextColor.DARK_PURPLE
+            charges >= max * 0.6 -> NamedTextColor.DARK_GREEN
+            charges > 0 -> NamedTextColor.GREEN
+            else -> NamedTextColor.GRAY
+        }
+        return Component.text(bar, color)
     }
 
     private fun formatTime(seconds: Long): String {
@@ -148,6 +219,29 @@ class StatusDisplay(private val plugin: MythosSMP) {
                 list.add("\u00A77Bloodthorns:" to 3)
                 list.add(if (cd1 <= 0) Pair("\u00A7aREADY", 2) else Pair("\u00A7c${cd1}s", 2))
                 list.add("\u00A77Rage Aura:" to 1)
+                list.add(if (cd2 <= 0) Pair("\u00A7aREADY", 0) else Pair("\u00A7c${cd2}s", 0))
+            }
+            "loki" -> {
+                val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "loki-shadow-step")
+                val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "loki-veil-of-lies")
+                list.add("\u00A77\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" to 6)
+                list.add("\u00A77Shadow Step:" to 5)
+                list.add(if (cd1 <= 0) Pair("\u00A7aREADY", 4) else Pair("\u00A7c${cd1}s", 4))
+                list.add("\u00A77Veil of Lies:" to 3)
+                list.add(if (cd2 <= 0) Pair("\u00A7aREADY", 2) else Pair("\u00A7c${cd2}s", 2))
+            }
+            "hades" -> {
+                val charges = VowHades.getCharges(player.uniqueId)
+                val maxCharges = VowHades.getMaxCharges()
+                list.add("\u00A77Soul Charges:" to 6)
+                list.add("\u00A7a$charges\u00A77/\u00A7a$maxCharges" to 5)
+
+                val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "hades-death-defiance")
+                val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "hades-soul-burst")
+                list.add("\u00A77\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" to 4)
+                list.add("\u00A77Death Defiance:" to 3)
+                list.add(if (cd1 <= 0) Pair("\u00A7aREADY", 2) else Pair("\u00A7c${cd1}s", 2))
+                list.add("\u00A77Soul Burst:" to 1)
                 list.add(if (cd2 <= 0) Pair("\u00A7aREADY", 0) else Pair("\u00A7c${cd2}s", 0))
             }
         }

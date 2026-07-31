@@ -1,15 +1,14 @@
 package com.mythossmp.domain.vow
 
 import com.mythossmp.MythosSMP
+import com.mythossmp.domain.event.VowVFXEvent
 import com.mythossmp.domain.model.ActiveAbility
 import com.mythossmp.domain.model.Curse
 import com.mythossmp.domain.model.PassiveEffect
 import com.mythossmp.domain.model.Vow
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
-import org.bukkit.Color
 import org.bukkit.Material
-import org.bukkit.Particle
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -18,6 +17,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.FoodLevelChangeEvent
+import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import java.util.UUID
@@ -45,6 +45,13 @@ class VowAres : Vow {
 
 private val rageMap = ConcurrentHashMap<UUID, Int>()
 private const val MAX_RAGE = 100
+private val lastCombatTime = ConcurrentHashMap<UUID, Long>()
+private const val COMBAT_TIMEOUT_MS = 10_000L
+
+private fun isInCombat(playerUuid: UUID): Boolean {
+    val last = lastCombatTime[playerUuid] ?: return false
+    return System.currentTimeMillis() - last < COMBAT_TIMEOUT_MS
+}
 
 class AresPassive : PassiveEffect, Listener {
     override val key = "ares-passive"
@@ -63,6 +70,7 @@ class AresPassive : PassiveEffect, Listener {
     @EventHandler
     fun onDamageDealt(event: EntityDamageByEntityEvent) {
         val damager = event.damager as? Player ?: return
+        lastCombatTime[damager.uniqueId] = System.currentTimeMillis()
 
         val currentRage = rageMap[damager.uniqueId]
         if (currentRage != null) {
@@ -100,6 +108,7 @@ class AresPassive : PassiveEffect, Listener {
     @EventHandler
     fun onDamageReceived(event: EntityDamageEvent) {
         val entity = event.entity as? Player ?: return
+        lastCombatTime[entity.uniqueId] = System.currentTimeMillis()
         val newRage = rageMap.compute(entity.uniqueId) { _, current ->
             if (current == null) return@compute null
             (current + event.finalDamage.toInt() * 2).coerceAtMost(MAX_RAGE)
@@ -131,12 +140,7 @@ class Bloodthorns : ActiveAbility {
         activePlayers[player.uniqueId] = BloodthornsData()
 
         player.sendMessage(Component.text("\u2694 Bloodthorns activated! Damage scales with your missing health.", NamedTextColor.RED))
-        player.world.spawnParticle(
-            Particle.DUST,
-            player.location.add(0.0, 1.0, 0.0),
-            50, 0.5, 0.5, 0.5, 0.1,
-            Particle.DustOptions(Color.fromRGB(0xFF0000), 1.5f)
-        )
+        MythosSMP.instance.vfxBroadcastService.publish(VowVFXEvent.AresBloodthorns(player.location.clone()))
         return true
     }
 }
@@ -159,12 +163,7 @@ class RageAura : ActiveAbility {
         rageMap[player.uniqueId] = 0
         val radius = 8.0
 
-        player.world.spawnParticle(
-            Particle.DUST,
-            player.location,
-            200, radius, 0.5, radius, 0.2,
-            Particle.DustOptions(Color.fromRGB(0xFF0000), 2.0f)
-        )
+        mythosPlugin.vfxBroadcastService.publish(VowVFXEvent.AresRageAura(player.location.clone(), radius))
 
         val trusted = mythosPlugin.trustService.getTrusted(player.uniqueId).toSet()
 
@@ -210,12 +209,24 @@ class WarHunger : Curse, Listener {
 
         val oldLevel = player.foodLevel
         val newLevel = event.foodLevel
-        if (newLevel < oldLevel) {
+        if (newLevel < oldLevel && isInCombat(player.uniqueId)) {
             val diff = oldLevel - newLevel
             val increasedDiff = (diff * 1.15).toInt().coerceAtLeast(1)
             event.foodLevel = (oldLevel - increasedDiff).coerceAtLeast(0)
         }
     }
+
+    @EventHandler
+    fun onPlayerConsume(event: PlayerItemConsumeEvent) {
+        val player = event.player
+        if (!afflicted.contains(player.uniqueId)) return
+        if (!event.item.type.isEdible) return
+
+        MythosSMP.instance.scheduler.later(java.time.Duration.ofMillis(50)) {
+            if (!player.isOnline) return@later
+            val reduced = player.saturation * 0.75f
+            player.saturation = reduced.coerceAtLeast(0.0f)
+        }    }
 }
 
 class AresListeners : Listener {
@@ -236,18 +247,14 @@ class AresListeners : Listener {
             player.health = 1.0
             player.setNoDamageTicks(60)
             player.sendMessage(Component.text("\uD83D\uDEE1 Bloodthorns saved you from lethal damage! You have 3 seconds before the vow exacts its price.", NamedTextColor.RED))
-            org.bukkit.Bukkit.getScheduler().runTaskLater(
-                MythosSMP.instance,
-                Runnable {
-                    if (!player.isOnline) return@Runnable
-                    player.setNoDamageTicks(0)
-                    val profile = MythosSMP.instance.profileService.getProfile(player.uniqueId)
-                    if (profile?.activeVow != null) {
-                        player.damage(100.0)
-                    }
-                },
-                60L
-            )
+            MythosSMP.instance.scheduler.later(java.time.Duration.ofSeconds(3)) {
+                if (!player.isOnline) return@later
+                player.setNoDamageTicks(0)
+                val profile = MythosSMP.instance.profileService.getProfile(player.uniqueId)
+                if (profile?.activeVow != null) {
+                    player.damage(100.0)
+                }
+            }
         }
     }
 }
