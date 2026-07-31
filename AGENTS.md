@@ -6,7 +6,7 @@ Kotlin/Paper 1.21.11 plugin. Packages shaded into a single fat JAR. No automated
 - **Must use JDK 21** — system JDK is 26, so run `JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew shadowJar`
 - Output: `build/libs/MythosSMP-1.0.0.jar`; **always copy to `~/server/plugins/`** after every build for manual testing
 - Shadow relocates `kotlin`, `kotlinx`, `com.zaxxer.hikari` under `com.mythossmp.libs.*`
-- Version in `build.gradle.kts:7` is source of truth (`1.0.0`); `CHANGELOG.md` is human-maintained and may reference future versions
+- Version in `build.gradle.kts:7` is source of truth (`1.5.0-alpha`); `CHANGELOG.md` is human-maintained and may reference future versions
 
 ## Architecture (DDD layers)
 ```

@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.5.0-Alpha — 2026-07-31
+
+### Phase 7: Vow of Zeus (Environmental System)
+- `VowZeus` — pure domain charge engine (thread-safe, hard cap 1.0)
+- `ZeusListener` — horizontal movement charges static energy; a full charge unleashes a static strike on attack (+5 flat damage) with decoupled VFX
+- Conductive curse — MAGIC/LIGHTNING/FIRE/FIRE_TICK damage amplified ×1.2, doubled while in water or during storms
+- `ZeusStaticOverchargeVFXEvent` → `strikeLightningEffect` rendered by `VFXPresentationListener`
+- `vows.zeus.*` config with startup validation and fallback defaults
+
+### Phase 8: Bootstrap & Composition Root
+- `Bootstrap` — 8-step init pipeline with step-level failure tracing; `MythosSMP.onEnable` delegates entirely to it
+- `ServiceContainer` — immutable holder of all 16 services; `MythosSMP` exposes container-backed getters
+- `Scheduler` abstraction (`application/task`) + `PaperScheduler` impl — every background task (trial tick, status display, deferred vow abilities) decoupled from the Bukkit scheduler
+- `ListenerRegistrar` / `CommandRegistrar` — centralized event + command wiring; legacy `CommandRegistry` removed
+- Async logout — dirty profile saves dispatch via `scheduler.async`; no more main-thread SQLite writes on quit
+- Trial entity cap — spawn guard clips custom mobs at 25 per arena via boundary-centered scan
+
+### Stress Suite
+- `GUIExploitStressTest` — 110 exploit inputs (SHIFT/DOUBLE_CLICK/NUMBER_KEY/drags) all cancelled, zero inventory mutation
+- `EntityThrottleStressTest` — 200-spawn flood clipped at exactly 25 custom entities
+- `AsyncLogoutStressTest` — 80 simultaneous quits against real SQLite with zero data loss
+- Runs via `./gradlew stressTest` or bundled in `integrationTest` (71 tests, all green)
+
 ## 1.4.0-Alpha — 2026-07-30
 
 ### Phase 6: Altar & Vow Selection UI
