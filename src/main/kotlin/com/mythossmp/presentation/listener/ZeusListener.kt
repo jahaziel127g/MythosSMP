@@ -1,9 +1,11 @@
 package com.mythossmp.presentation.listener
 
+import com.mythossmp.MythosSMP
 import com.mythossmp.application.vfx.VFXBroadcastService
 import com.mythossmp.domain.event.VowVFXEvent
 import com.mythossmp.domain.vow.VowZeus
 import com.mythossmp.infrastructure.config.ConfigManager
+import java.util.UUID
 import kotlin.math.sqrt
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -14,6 +16,7 @@ import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.player.PlayerMoveEvent
 
 class ZeusListener(
+    private val plugin: MythosSMP,
     private val vowZeus: VowZeus,
     private val vfxService: VFXBroadcastService,
     private val config: ConfigManager.ZeusConfig
@@ -21,6 +24,7 @@ class ZeusListener(
 
     @EventHandler(priority = EventPriority.MONITOR)
     fun onMove(event: PlayerMoveEvent) {
+        if (!hasZeus(event.player.uniqueId)) return
         val to = event.to ?: return
 
         val dx = to.x - event.from.x
@@ -35,6 +39,7 @@ class ZeusListener(
     @EventHandler(priority = EventPriority.HIGH)
     fun onAttack(event: EntityDamageByEntityEvent) {
         val attacker = event.damager as? Player ?: return
+        if (!hasZeus(attacker.uniqueId)) return
 
         if (vowZeus.consumeCharge(attacker.uniqueId)) {
             event.damage += config.staticStrikeDamage
@@ -45,6 +50,7 @@ class ZeusListener(
     @EventHandler
     fun onDamage(event: EntityDamageEvent) {
         val player = event.entity as? Player ?: return
+        if (!hasZeus(player.uniqueId)) return
         val cause = event.cause
 
         if (cause != EntityDamageEvent.DamageCause.MAGIC &&
@@ -60,5 +66,10 @@ class ZeusListener(
             config.conductiveMultiplier
         }
         event.damage *= multiplier
+    }
+
+    private fun hasZeus(uuid: UUID): Boolean {
+        return plugin.profileService.getProfile(uuid)
+            ?.activeVow?.lowercase()?.removePrefix("vow-") == "zeus"
     }
 }

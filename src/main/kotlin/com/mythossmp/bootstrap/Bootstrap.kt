@@ -119,6 +119,7 @@ class Bootstrap(private val plugin: MythosSMP) {
         vowRegistry.register(VowAres())
         vowRegistry.register(VowLoki())
         vowRegistry.register(VowHades())
+        vowRegistry.register(vowZeus)
         registerDefaultTrials()
     }
 
@@ -196,6 +197,21 @@ class Bootstrap(private val plugin: MythosSMP) {
             ),
             baseHealth = 65.0,
             baseDamage = 6.5,
+            timeLimitSeconds = 600,
+            maxPartySize = 4
+        ))
+        trialService.registerDefaultConfig(TrialConfig(
+            key = "zeus",
+            displayName = "Zeus",
+            vowKey = "zeus",
+            description = "Survive the storm of the Sky God",
+            waves = listOf(
+                WaveConfig(1, listOf(MobSpawnEntry(EntityType.ZOMBIE, 4), MobSpawnEntry(EntityType.SPIDER, 2))),
+                WaveConfig(2, listOf(MobSpawnEntry(EntityType.SKELETON, 4), MobSpawnEntry(EntityType.CREEPER, 2))),
+                WaveConfig(3, listOf(MobSpawnEntry(EntityType.BLAZE, 3), MobSpawnEntry(EntityType.SKELETON, 3)))
+            ),
+            baseHealth = 55.0,
+            baseDamage = 5.5,
             timeLimitSeconds = 600,
             maxPartySize = 4
         ))

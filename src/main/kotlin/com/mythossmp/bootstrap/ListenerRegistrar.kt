@@ -34,6 +34,7 @@ class ListenerRegistrar(private val container: ServiceContainer) {
         pm.registerEvents(VowHades.curseInstance, plugin)
         pm.registerEvents(HadesListener(), plugin)
         pm.registerEvents(ZeusListener(
+            container.plugin,
             container.vowZeus,
             container.vfxBroadcastService,
             container.configManager.getZeusConfig()

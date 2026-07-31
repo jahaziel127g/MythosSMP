@@ -20,9 +20,10 @@ class VowSelectionMenu(private val plugin: MythosSMP) {
         .build()
 
     val deitySlots: Map<Int, String> = mapOf(
-        11 to "ares",
-        13 to "loki",
-        15 to "hades"
+        10 to "ares",
+        12 to "loki",
+        14 to "zeus",
+        16 to "hades"
     )
 
     fun open(player: Player) {
@@ -116,6 +117,7 @@ class VowSelectionMenu(private val plugin: MythosSMP) {
         return when (key) {
             "ares" -> Material.NETHERITE_SWORD
             "loki" -> Material.ENDER_EYE
+            "zeus" -> Material.LIGHTNING_ROD
             "hades" -> Material.WITHER_SKELETON_SKULL
             else -> Material.BARRIER
         }

@@ -12,6 +12,7 @@ import com.mythossmp.application.vfx.VFXBroadcastService
 import com.mythossmp.bootstrap.Bootstrap
 import com.mythossmp.bootstrap.ServiceContainer
 import com.mythossmp.domain.vow.VowRegistry
+import com.mythossmp.domain.vow.VowZeus
 import com.mythossmp.infrastructure.config.ConfigManager
 import com.mythossmp.infrastructure.database.DatabaseManager
 import com.mythossmp.infrastructure.trial.ScrollItemRegistry
@@ -34,6 +35,7 @@ class MythosSMP : JavaPlugin() {
     val unionService: UnionService get() = container.unionService
     val combatService: CombatService get() = container.combatService
     val vowRegistry: VowRegistry get() = container.vowRegistry
+    val vowZeus: VowZeus get() = container.vowZeus
     val cooldownService: CooldownService get() = container.cooldownService
     val abilityExecutor: AbilityExecutor get() = container.abilityExecutor
     val statusDisplay: StatusDisplay get() = container.displayService

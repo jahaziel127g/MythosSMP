@@ -35,6 +35,7 @@ class StatusDisplay(
         when (activeKey) {
             "ares" -> updateAresActionBar(player)
             "loki" -> updateLokiActionBar(player)
+            "zeus" -> updateZeusActionBar(player)
             "hades" -> updateHadesActionBar(player)
         }
         if (player.isOp) {
@@ -56,6 +57,7 @@ class StatusDisplay(
             when (activeKey) {
                 "ares" -> updateAresActionBar(player)
                 "loki" -> updateLokiActionBar(player)
+                "zeus" -> updateZeusActionBar(player)
                 "hades" -> updateHadesActionBar(player)
             }
 
@@ -139,6 +141,46 @@ class StatusDisplay(
             .append(sb)
             .build()
         )
+    }
+
+    private fun updateZeusActionBar(player: Player) {
+        val charge = plugin.vowZeus.getCharge(player.uniqueId)
+        val bar = buildChargeBar(charge)
+
+        val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "zeus-static-strike")
+        val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "zeus-overcharge")
+
+        val ss = if (cd1 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd1), NamedTextColor.RED)
+        val oc = if (cd2 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd2), NamedTextColor.RED)
+
+        player.sendActionBar(Component.text()
+            .append(Component.text("\u26A1 ", NamedTextColor.YELLOW))
+            .append(Component.text("Charge ", NamedTextColor.GRAY))
+            .append(bar)
+            .append(Component.text(" ${(charge * 100).toInt()}%", NamedTextColor.YELLOW))
+            .append(Component.text("  \u23F1 ", NamedTextColor.DARK_GRAY))
+            .append(Component.text("SS:", NamedTextColor.GRAY))
+            .append(ss)
+            .append(Component.text("  ", NamedTextColor.DARK_GRAY))
+            .append(Component.text("OC:", NamedTextColor.GRAY))
+            .append(oc)
+            .build()
+        )
+    }
+
+    private fun buildChargeBar(charge: Double): Component {
+        val filled = (charge * 10).toInt().coerceIn(0, 10)
+        val empty = 10 - filled
+        val bar = "\u2588".repeat(filled) + "\u2591".repeat(empty)
+        val color = when {
+            charge >= 1.0 -> NamedTextColor.YELLOW
+            charge >= 0.6 -> NamedTextColor.GOLD
+            charge > 0.0 -> NamedTextColor.GREEN
+            else -> NamedTextColor.GRAY
+        }
+        return Component.text(bar, color)
     }
 
     private fun buildSoulBar(charges: Int, max: Int): Component {
@@ -242,6 +284,19 @@ class StatusDisplay(
                 list.add("\u00A77Death Defiance:" to 3)
                 list.add(if (cd1 <= 0) Pair("\u00A7aREADY", 2) else Pair("\u00A7c${cd1}s", 2))
                 list.add("\u00A77Soul Burst:" to 1)
+                list.add(if (cd2 <= 0) Pair("\u00A7aREADY", 0) else Pair("\u00A7c${cd2}s", 0))
+            }
+            "zeus" -> {
+                val chargePercent = (plugin.vowZeus.getCharge(player.uniqueId) * 100).toInt()
+                list.add("\u00A77Static Charge:" to 6)
+                list.add("\u00A7e$chargePercent\u00A77/\u00A7e100" to 5)
+
+                val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "zeus-static-strike")
+                val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "zeus-overcharge")
+                list.add("\u00A77\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" to 4)
+                list.add("\u00A77Static Strike:" to 3)
+                list.add(if (cd1 <= 0) Pair("\u00A7aREADY", 2) else Pair("\u00A7c${cd1}s", 2))
+                list.add("\u00A77Overcharge:" to 1)
                 list.add(if (cd2 <= 0) Pair("\u00A7aREADY", 0) else Pair("\u00A7c${cd2}s", 0))
             }
         }

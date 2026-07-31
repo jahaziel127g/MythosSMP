@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.1-Alpha — 2026-07-31
+
+### Zeus: full selectable vow
+- `VowZeus` now implements `Vow` — registered in `VowRegistry`, selectable via altar (Lightning Rod icon, slot 14) and `/vow accept`
+- Zeus trial added (`/vow accept zeus` requires completing it): 3 waves ending in Blaze/Skeleton
+- Abilities: `Static Strike` (30s CD — strikes the nearest enemy in front of you with lightning) and `Overcharge` (60s CD — fills the static meter to 100%)
+- All Zeus mechanics (charge accumulation, static strike on full charge, conductive curse) now require `zeus` as the active vow — no longer global
+- StatusDisplay: static charge bar + ability cooldowns in the ActionBar and dev sidebar
+- `VowZeusTest` — charge cap, negative-input guard, consume semantics, registry metadata
+
 ## 1.5.0-Alpha — 2026-07-31
 
 ### Phase 7: Vow of Zeus (Environmental System)
