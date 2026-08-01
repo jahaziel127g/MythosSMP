@@ -24,7 +24,7 @@ A production-grade Kotlin/Paper 1.21.11 Minecraft plugin featuring mythological 
 ./gradlew build
 ```
 
-Output: `build/libs/MythosSMP-1.0.0.jar`
+Output: `build/libs/MythosSMP-<version>.jar`
 
 ## Commands
 
