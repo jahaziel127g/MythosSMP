@@ -24,6 +24,13 @@ sealed class VowVFXEvent(
 
     data class ZeusStaticOverchargeVFXEvent(override val location: Location) : VowVFXEvent(location)
 
+    data class PoseidonWaveCrash(override val location: Location, val radius: Double) : VowVFXEvent(location)
+    data class PoseidonAbyssalBlessing(override val location: Location) : VowVFXEvent(location)
+
+    data class HermesDoubleJump(override val location: Location) : VowVFXEvent(location)
+    data class HermesDash(override val location: Location) : VowVFXEvent(location)
+    data class HermesZephyrActivate(override val location: Location) : VowVFXEvent(location)
+
     data class VowSelectionActivate(override val location: Location, val vowKey: String) : VowVFXEvent(location)
 
     override fun getHandlers(): HandlerList = HANDLERS

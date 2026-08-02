@@ -33,6 +33,30 @@ class ConfigManager(private val plugin: MythosSMP) {
         val staticStrikeDamage: Double
     )
 
+    data class PoseidonConfig(
+        val enabled: Boolean,
+        val waveCrashCooldown: Int,
+        val waveCrashRadius: Double,
+        val pushVelocityFactor: Double,
+        val blessingCooldown: Int,
+        val strengthAmplifier: Int,
+        val regenAmplifier: Int,
+        val dehydrationLimitMinutes: Double,
+        val dehydrationDamage: Double,
+        val dehydrationIntervalSeconds: Double
+    )
+
+    data class HermesConfig(
+        val enabled: Boolean,
+        val doubleJumpCooldownTicks: Int,
+        val dashCooldown: Int,
+        val dashDistance: Double,
+        val zephyrCooldown: Int,
+        val zephyrDuration: Double,
+        val maxArmorTier: String,
+        val rejectionDamage: Double
+    )
+
     private val vowDefaults = mapOf(
         "loki" to VowConfig(
             enabled = true,
@@ -79,6 +103,14 @@ class ConfigManager(private val plugin: MythosSMP) {
                 validateZeusSection(section)
                 continue
             }
+            if (vowKey == "poseidon") {
+                validatePoseidonSection(section)
+                continue
+            }
+            if (vowKey == "hermes") {
+                validateHermesSection(section)
+                continue
+            }
             val defaults = vowDefaults[vowKey] ?: continue
             validateVowSection(vowKey, section, defaults)
         }
@@ -112,6 +144,178 @@ class ConfigManager(private val plugin: MythosSMP) {
             staticChargePerBlock = section.getDouble("static-charge-per-block", 0.01),
             conductiveMultiplier = section.getDouble("conductive-multiplier", 1.2),
             staticStrikeDamage = section.getDouble("static-strike-damage", 5.0)
+        )
+    }
+
+    private fun validatePoseidonSection(section: ConfigurationSection) {
+        section.getBoolean("enabled", true).also { section.set("enabled", it) }
+
+        val ab1 = section.getConfigurationSection("ability1")
+        val ab2 = section.getConfigurationSection("ability2")
+        val curse = section.getConfigurationSection("curse")
+
+        if (ab1 != null) {
+            val cd = ab1.getInt("cooldown-seconds", 35)
+            if (cd !in 1..300) {
+                plugin.logger.warning("[poseidon] ability1.cooldown-seconds ($cd) out of range [1..300]; using default 35.")
+                ab1.set("cooldown-seconds", 35)
+            }
+            val radius = ab1.getDouble("radius-blocks", 8.0)
+            if (radius <= 0 || radius > 50.0) {
+                plugin.logger.warning("[poseidon] ability1.radius-blocks ($radius) out of range (0..50]; using default 8.0.")
+                ab1.set("radius-blocks", 8.0)
+            }
+            val push = ab1.getDouble("push-velocity-factor", 1.4)
+            if (push <= 0 || push > 10.0) {
+                plugin.logger.warning("[poseidon] ability1.push-velocity-factor ($push) out of range (0..10]; using default 1.4.")
+                ab1.set("push-velocity-factor", 1.4)
+            }
+        }
+        if (ab2 != null) {
+            val cd = ab2.getInt("cooldown-seconds", 10)
+            if (cd !in 1..300) {
+                plugin.logger.warning("[poseidon] ability2.cooldown-seconds ($cd) out of range [1..300]; using default 10.")
+                ab2.set("cooldown-seconds", 10)
+            }
+            val sa = ab2.getInt("strength-amp", 0)
+            if (sa !in 0..4) {
+                plugin.logger.warning("[poseidon] ability2.strength-amp ($sa) out of range [0..4]; using default 0.")
+                ab2.set("strength-amp", 0)
+            }
+            val ra = ab2.getInt("regen-amp", 0)
+            if (ra !in 0..4) {
+                plugin.logger.warning("[poseidon] ability2.regen-amp ($ra) out of range [0..4]; using default 0.")
+                ab2.set("regen-amp", 0)
+            }
+        }
+        if (curse != null) {
+            val limit = curse.getDouble("dehydration-limit-minutes", 5.0)
+            if (limit <= 0 || limit > 60.0) {
+                plugin.logger.warning("[poseidon] curse.dehydration-limit-minutes ($limit) out of range (0..60]; using default 5.0.")
+                curse.set("dehydration-limit-minutes", 5.0)
+            }
+            val dmg = curse.getDouble("damage-amount", 1.0)
+            if (dmg <= 0 || dmg > 100.0) {
+                plugin.logger.warning("[poseidon] curse.damage-amount ($dmg) out of range (0..100]; using default 1.0.")
+                curse.set("damage-amount", 1.0)
+            }
+            val interval = curse.getDouble("interval-seconds", 3.0)
+            if (interval <= 0 || interval > 60.0) {
+                plugin.logger.warning("[poseidon] curse.interval-seconds ($interval) out of range (0..60]; using default 3.0.")
+                curse.set("interval-seconds", 3.0)
+            }
+        }
+    }
+
+    fun getPoseidonConfig(): PoseidonConfig {
+        val section = config.getConfigurationSection("vows.poseidon")
+            ?: return PoseidonConfig(
+                enabled = true,
+                waveCrashCooldown = 35,
+                waveCrashRadius = 8.0,
+                pushVelocityFactor = 1.4,
+                blessingCooldown = 10,
+                strengthAmplifier = 0,
+                regenAmplifier = 0,
+                dehydrationLimitMinutes = 5.0,
+                dehydrationDamage = 1.0,
+                dehydrationIntervalSeconds = 3.0
+            )
+        val ab1 = section.getConfigurationSection("ability1")
+        val ab2 = section.getConfigurationSection("ability2")
+        val curse = section.getConfigurationSection("curse")
+        return PoseidonConfig(
+            enabled = section.getBoolean("enabled", true),
+            waveCrashCooldown = ab1?.getInt("cooldown-seconds") ?: 35,
+            waveCrashRadius = ab1?.getDouble("radius-blocks") ?: 8.0,
+            pushVelocityFactor = ab1?.getDouble("push-velocity-factor") ?: 1.4,
+            blessingCooldown = ab2?.getInt("cooldown-seconds") ?: 10,
+            strengthAmplifier = ab2?.getInt("strength-amp") ?: 0,
+            regenAmplifier = ab2?.getInt("regen-amp") ?: 0,
+            dehydrationLimitMinutes = curse?.getDouble("dehydration-limit-minutes") ?: 5.0,
+            dehydrationDamage = curse?.getDouble("damage-amount") ?: 1.0,
+            dehydrationIntervalSeconds = curse?.getDouble("interval-seconds") ?: 3.0
+        )
+    }
+
+    private fun validateHermesSection(section: ConfigurationSection) {
+        section.getBoolean("enabled", true).also { section.set("enabled", it) }
+
+        val passive = section.getConfigurationSection("passive")
+        val ab1 = section.getConfigurationSection("ability1")
+        val ab2 = section.getConfigurationSection("ability2")
+        val curse = section.getConfigurationSection("curse")
+
+        if (passive != null) {
+            val ticks = passive.getInt("double-jump-cooldown-ticks", 300)
+            if (ticks !in 20..1200) {
+                plugin.logger.warning("[hermes] passive.double-jump-cooldown-ticks ($ticks) out of range [20..1200]; using default 300.")
+                passive.set("double-jump-cooldown-ticks", 300)
+            }
+        }
+        if (ab1 != null) {
+            val cd = ab1.getInt("cooldown-seconds", 6)
+            if (cd !in 1..300) {
+                plugin.logger.warning("[hermes] ability1.cooldown-seconds ($cd) out of range [1..300]; using default 6.")
+                ab1.set("cooldown-seconds", 6)
+            }
+            val dist = ab1.getDouble("dash-distance", 12.0)
+            if (dist <= 0 || dist > 100.0) {
+                plugin.logger.warning("[hermes] ability1.dash-distance ($dist) out of range (0..100]; using default 12.0.")
+                ab1.set("dash-distance", 12.0)
+            }
+        }
+        if (ab2 != null) {
+            val cd = ab2.getInt("cooldown-seconds", 150)
+            if (cd !in 1..300) {
+                plugin.logger.warning("[hermes] ability2.cooldown-seconds ($cd) out of range [1..300]; using default 150.")
+                ab2.set("cooldown-seconds", 150)
+            }
+            val dur = ab2.getDouble("duration-seconds", 8.0)
+            if (dur <= 0 || dur > 60.0) {
+                plugin.logger.warning("[hermes] ability2.duration-seconds ($dur) out of range (0..60]; using default 8.0.")
+                ab2.set("duration-seconds", 8.0)
+            }
+        }
+        if (curse != null) {
+            val tier = curse.getString("max-armor-tier", "CHAINMAIL") ?: "CHAINMAIL"
+            if (tier.uppercase() !in setOf("LEATHER", "GOLD", "CHAINMAIL", "IRON", "DIAMOND", "NETHERITE")) {
+                plugin.logger.warning("[hermes] curse.max-armor-tier ($tier) invalid; using default CHAINMAIL.")
+                curse.set("max-armor-tier", "CHAINMAIL")
+            }
+            val dmg = curse.getDouble("rejection-damage", 4.0)
+            if (dmg <= 0 || dmg > 100.0) {
+                plugin.logger.warning("[hermes] curse.rejection-damage ($dmg) out of range (0..100]; using default 4.0.")
+                curse.set("rejection-damage", 4.0)
+            }
+        }
+    }
+
+    fun getHermesConfig(): HermesConfig {
+        val section = config.getConfigurationSection("vows.hermes")
+            ?: return HermesConfig(
+                enabled = true,
+                doubleJumpCooldownTicks = 300,
+                dashCooldown = 6,
+                dashDistance = 12.0,
+                zephyrCooldown = 150,
+                zephyrDuration = 8.0,
+                maxArmorTier = "CHAINMAIL",
+                rejectionDamage = 4.0
+            )
+        val passive = section.getConfigurationSection("passive")
+        val ab1 = section.getConfigurationSection("ability1")
+        val ab2 = section.getConfigurationSection("ability2")
+        val curse = section.getConfigurationSection("curse")
+        return HermesConfig(
+            enabled = section.getBoolean("enabled", true),
+            doubleJumpCooldownTicks = passive?.getInt("double-jump-cooldown-ticks") ?: 300,
+            dashCooldown = ab1?.getInt("cooldown-seconds") ?: 6,
+            dashDistance = ab1?.getDouble("dash-distance") ?: 12.0,
+            zephyrCooldown = ab2?.getInt("cooldown-seconds") ?: 150,
+            zephyrDuration = ab2?.getDouble("duration-seconds") ?: 8.0,
+            maxArmorTier = curse?.getString("max-armor-tier") ?: "CHAINMAIL",
+            rejectionDamage = curse?.getDouble("rejection-damage") ?: 4.0
         )
     }
 

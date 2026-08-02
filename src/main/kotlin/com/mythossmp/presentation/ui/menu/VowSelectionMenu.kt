@@ -21,9 +21,11 @@ class VowSelectionMenu(private val plugin: MythosSMP) {
 
     val deitySlots: Map<Int, String> = mapOf(
         10 to "ares",
-        12 to "loki",
-        14 to "zeus",
-        16 to "hades"
+        13 to "loki",
+        16 to "zeus",
+        19 to "hades",
+        22 to "poseidon",
+        25 to "hermes"
     )
 
     fun open(player: Player) {
@@ -49,7 +51,8 @@ class VowSelectionMenu(private val plugin: MythosSMP) {
 
         for (slot in 0 until 27) {
             if (inventory.getItem(slot) != null) continue
-            if (slot in listOf(9, 17) || slot in 18..26) {
+            val col = slot % 9
+            if (col == 0 || col == 8 || slot >= 18) {
                 inventory.setItem(slot, createFillerItem())
             }
         }
@@ -119,6 +122,8 @@ class VowSelectionMenu(private val plugin: MythosSMP) {
             "loki" -> Material.ENDER_EYE
             "zeus" -> Material.LIGHTNING_ROD
             "hades" -> Material.WITHER_SKELETON_SKULL
+            "poseidon" -> Material.TRIDENT
+            "hermes" -> Material.FEATHER
             else -> Material.BARRIER
         }
     }

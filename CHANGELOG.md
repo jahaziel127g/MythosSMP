@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.6.0-Alpha — 2026-08-02
+
+### Two new selectable vows (per implementation plan)
+- **Poseidon (God of the Sea)** — altar slot 22 (Trident):
+  - Passive: Dolphin's Grace + water breathing + Haste V while in water
+  - `Wave Crash` (35s): pushes all untrusted entities outward in a wave
+  - `Abyssal Blessing` (10s): Strength I + Regeneration I while in water, stripped 3s after leaving
+  - Curse `Dehydration`: no water/rain contact for 5 minutes → 1 damage every 3s
+  - Trial: 3 waves of Drowned/Zombie → Drowned/Skeleton → Drowned/Phantom
+- **Hermes (God of Travel)** — altar slot 25 (Feather):
+  - Passive: double jump (space, 15s cooldown) + complete fall damage immunity
+  - `Dash` (6s): launch forward 12 blocks in facing direction
+  - `Zephyr Wing` (150s): 8s of flight; taking damage cancels it into 1s slow falling
+  - Curse `Light Constitution`: armor heavier than chainmail is ejected + 4 damage
+  - Trial: 3 waves of Spider/Zombie → Spider/Skeleton → Spider/Phantom
+- Altar menu reworked to 2 rows of 3 (slots 10/13/16/19/22/25); `GUIExploitStressTest` updated
+- Config sections `vows.poseidon.*` and `vows.hermes.*` with strict validation + fallback defaults
+
 ## 1.5.1-Alpha — 2026-07-31
 
 ### Zeus: full selectable vow

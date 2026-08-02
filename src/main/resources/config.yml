@@ -121,5 +121,32 @@ vows:
         cooldown: 30
         range: 8.0
         base-damage: 4.0
+  poseidon:
+    enabled: true
+    ability1:
+      cooldown-seconds: 35
+      radius-blocks: 8.0
+      push-velocity-factor: 1.4
+    ability2:
+      cooldown-seconds: 10
+      strength-amp: 0
+      regen-amp: 0
+    curse:
+      dehydration-limit-minutes: 5.0
+      damage-amount: 1.0
+      interval-seconds: 3.0
+  hermes:
+    enabled: true
+    passive:
+      double-jump-cooldown-ticks: 300
+    ability1:
+      cooldown-seconds: 6
+      dash-distance: 12.0
+    ability2:
+      cooldown-seconds: 150
+      duration-seconds: 8.0
+    curse:
+      max-armor-tier: "CHAINMAIL"
+      rejection-damage: 4.0
 
 debug: false

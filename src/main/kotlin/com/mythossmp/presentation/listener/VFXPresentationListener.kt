@@ -127,11 +127,67 @@ class VFXPresentationListener : Listener {
                 world.strikeLightningEffect(event.location)
             }
 
+            is VowVFXEvent.PoseidonWaveCrash -> {
+                world.spawnParticle(
+                    Particle.SPLASH,
+                    event.location,
+                    200, event.radius, 1.0, event.radius, 0.5
+                )
+                world.spawnParticle(
+                    Particle.DUST,
+                    event.location,
+                    150, event.radius, 1.0, event.radius, 0.2,
+                    Particle.DustOptions(Color.fromRGB(0x0077FF), 1.8f)
+                )
+            }
+
+            is VowVFXEvent.PoseidonAbyssalBlessing -> {
+                world.spawnParticle(
+                    Particle.DUST,
+                    event.location.add(0.0, 1.0, 0.0),
+                    60, 0.6, 0.6, 0.6, 0.1,
+                    Particle.DustOptions(Color.fromRGB(0x00BFFF), 1.6f)
+                )
+            }
+
+            is VowVFXEvent.HermesDoubleJump -> {
+                world.spawnParticle(
+                    Particle.CLOUD,
+                    event.location.add(0.0, 0.2, 0.0),
+                    25, 0.3, 0.1, 0.3, 0.05
+                )
+            }
+
+            is VowVFXEvent.HermesDash -> {
+                world.spawnParticle(
+                    Particle.CLOUD,
+                    event.location.add(0.0, 1.0, 0.0),
+                    40, 0.4, 0.4, 0.4, 0.15
+                )
+            }
+
+            is VowVFXEvent.HermesZephyrActivate -> {
+                world.spawnParticle(
+                    Particle.END_ROD,
+                    event.location.add(0.0, 1.0, 0.0),
+                    60, 0.5, 0.5, 0.5, 0.08
+                )
+                world.spawnParticle(
+                    Particle.DUST,
+                    event.location.add(0.0, 1.0, 0.0),
+                    40, 0.5, 0.5, 0.5, 0.1,
+                    Particle.DustOptions(Color.fromRGB(0xFFD700), 1.5f)
+                )
+            }
+
             is VowVFXEvent.VowSelectionActivate -> {
                 val color = when (event.vowKey) {
                     "ares" -> Color.fromRGB(0xFF0000)
                     "loki" -> Color.fromRGB(0x4A0080)
                     "hades" -> Color.fromRGB(0x00AA00)
+                    "zeus" -> Color.fromRGB(0xFFFF00)
+                    "poseidon" -> Color.fromRGB(0x0077FF)
+                    "hermes" -> Color.fromRGB(0xFFD700)
                     else -> Color.fromRGB(0xFFFFFF)
                 }
                 world.spawnParticle(

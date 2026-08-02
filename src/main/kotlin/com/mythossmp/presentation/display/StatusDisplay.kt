@@ -37,6 +37,8 @@ class StatusDisplay(
             "loki" -> updateLokiActionBar(player)
             "zeus" -> updateZeusActionBar(player)
             "hades" -> updateHadesActionBar(player)
+            "poseidon" -> updatePoseidonActionBar(player)
+            "hermes" -> updateHermesActionBar(player)
         }
         if (player.isOp) {
             updateDevSidebar(player, activeKey)
@@ -59,6 +61,8 @@ class StatusDisplay(
                 "loki" -> updateLokiActionBar(player)
                 "zeus" -> updateZeusActionBar(player)
                 "hades" -> updateHadesActionBar(player)
+                "poseidon" -> updatePoseidonActionBar(player)
+                "hermes" -> updateHermesActionBar(player)
             }
 
             if (player.isOp) {
@@ -166,6 +170,52 @@ class StatusDisplay(
             .append(Component.text("  ", NamedTextColor.DARK_GRAY))
             .append(Component.text("OC:", NamedTextColor.GRAY))
             .append(oc)
+            .build()
+        )
+    }
+
+    private fun updatePoseidonActionBar(player: Player) {
+        val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "poseidon-wave-crash")
+        val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "poseidon-abyssal-blessing")
+
+        val wc = if (cd1 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd1), NamedTextColor.RED)
+        val ab = if (cd2 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd2), NamedTextColor.RED)
+
+        player.sendActionBar(Component.text()
+            .append(Component.text("\uD83C\uDF0A ", NamedTextColor.AQUA))
+            .append(Component.text("WC:", NamedTextColor.GRAY))
+            .append(wc)
+            .append(Component.text("  ", NamedTextColor.DARK_GRAY))
+            .append(Component.text("AB:", NamedTextColor.GRAY))
+            .append(ab)
+            .build()
+        )
+    }
+
+    private fun updateHermesActionBar(player: Player) {
+        val dj = com.mythossmp.domain.vow.VowHermes.getDoubleJumpRemainingSeconds(player.uniqueId)
+        val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "hermes-dash")
+        val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "hermes-zephyr-wing")
+
+        val djC = if (dj <= 0) Component.text("READY", NamedTextColor.GREEN)
+                  else Component.text("${dj}s", NamedTextColor.RED)
+        val da = if (cd1 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd1), NamedTextColor.RED)
+        val zw = if (cd2 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd2), NamedTextColor.RED)
+
+        player.sendActionBar(Component.text()
+            .append(Component.text("\uD83E\uDD86 ", NamedTextColor.YELLOW))
+            .append(Component.text("DJ:", NamedTextColor.GRAY))
+            .append(djC)
+            .append(Component.text("  ", NamedTextColor.DARK_GRAY))
+            .append(Component.text("D:", NamedTextColor.GRAY))
+            .append(da)
+            .append(Component.text("  ", NamedTextColor.DARK_GRAY))
+            .append(Component.text("ZW:", NamedTextColor.GRAY))
+            .append(zw)
             .build()
         )
     }
@@ -297,6 +347,27 @@ class StatusDisplay(
                 list.add("\u00A77Static Strike:" to 3)
                 list.add(if (cd1 <= 0) Pair("\u00A7aREADY", 2) else Pair("\u00A7c${cd1}s", 2))
                 list.add("\u00A77Overcharge:" to 1)
+                list.add(if (cd2 <= 0) Pair("\u00A7aREADY", 0) else Pair("\u00A7c${cd2}s", 0))
+            }
+            "poseidon" -> {
+                val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "poseidon-wave-crash")
+                val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "poseidon-abyssal-blessing")
+                list.add("\u00A77\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" to 6)
+                list.add("\u00A77Wave Crash:" to 5)
+                list.add(if (cd1 <= 0) Pair("\u00A7aREADY", 4) else Pair("\u00A7c${cd1}s", 4))
+                list.add("\u00A77Abyssal Blessing:" to 3)
+                list.add(if (cd2 <= 0) Pair("\u00A7aREADY", 2) else Pair("\u00A7c${cd2}s", 2))
+            }
+            "hermes" -> {
+                val dj = com.mythossmp.domain.vow.VowHermes.getDoubleJumpRemainingSeconds(player.uniqueId)
+                val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "hermes-dash")
+                val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "hermes-zephyr-wing")
+                list.add("\u00A77\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" to 6)
+                list.add("\u00A77Double Jump:" to 5)
+                list.add(if (dj <= 0) Pair("\u00A7aREADY", 4) else Pair("\u00A7c${dj}s", 4))
+                list.add("\u00A77Dash:" to 3)
+                list.add(if (cd1 <= 0) Pair("\u00A7aREADY", 2) else Pair("\u00A7c${cd1}s", 2))
+                list.add("\u00A77Zephyr Wing:" to 1)
                 list.add(if (cd2 <= 0) Pair("\u00A7aREADY", 0) else Pair("\u00A7c${cd2}s", 0))
             }
         }
