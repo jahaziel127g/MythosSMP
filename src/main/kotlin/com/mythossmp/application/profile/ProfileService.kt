@@ -60,7 +60,11 @@ class ProfileService(
                     null
                 }
             } else {
-                existing.copy(lastKnownName = name, dirty = true)
+                if (existing.lastKnownName != name) {
+                    existing.copy(lastKnownName = name, dirty = true)
+                } else {
+                    existing
+                }
             }
         } ?: return
 

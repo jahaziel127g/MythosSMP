@@ -108,17 +108,17 @@ class VowCommand(private val plugin: MythosSMP) : CommandExecutor, TabCompleter 
             return
         }
 
+        val normalizeKey = plugin.vowRegistry.normalizeActiveKey(vowKey)
+        if (profile.activeVow == normalizeKey) {
+            player.sendMessage(Component.text("You already have this vow active.", NamedTextColor.YELLOW))
+            return
+        }
+
         val oldActiveKey = profile.activeVow
         if (oldActiveKey != null) {
             val oldVow = plugin.vowRegistry.getVowByActiveKey(oldActiveKey)
             oldVow?.passiveEffects?.forEach { it.remove(player) }
             oldVow?.curse?.remove(player)
-        }
-
-        val normalizeKey = plugin.vowRegistry.normalizeActiveKey(vowKey)
-        if (profile.activeVow == normalizeKey) {
-            player.sendMessage(Component.text("You already have this vow active.", NamedTextColor.YELLOW))
-            return
         }
 
         plugin.profileService.updateProfile(player.uniqueId) {

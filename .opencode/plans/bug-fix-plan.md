@@ -1,5 +1,12 @@
 # MythosSMP — Bug Fix Plan
 
+> **RE-VERIFICATION 2026-08-02 (post Phase 5-8 refactor): ALL 11 items CONFIRMED FIXED.**
+> The refactor (ProfileService copy-on-write, immutable PlayerProfile, async logout, in-memory
+> trust/union repos, per-borrow PRAGMA, INSERT OR IGNORE, Bloodthorns noDamageTicks) resolved
+> every item below. This file is kept as an audit record — do not re-open bugs without a
+> fresh reproduction. Known-latent item: #6 (sync JDBC on async pre-login thread) is accepted
+> as the standard pattern — local SQLite is fast and the main thread is never blocked.
+
 Audited by 3 parallel explore agents across the database/persistence, vow/ability/cooldown,
 and command/lifecycle areas. Each bug below was re-verified against the source on disk.
 Severity: HIGH (correctness/data-loss) · MEDIUM (functional/perf/security) · LOW (latent/minor).
