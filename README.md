@@ -14,17 +14,30 @@ A production-grade Kotlin/Paper 1.21.11 Minecraft plugin featuring mythological 
 |   | ├ Auto-validating Vow YAML config | ✅ Complete |
 |   | ├ Vow of Ares (War) | ✅ Complete |
 |   | ├ Vow of Loki (Trickster) | ✅ Complete |
-|   | └ Remaining 12 Vows | ⏳ Pending |
+|   | ├ Vow of Zeus (Lightning) | ✅ Complete |
+|   | ├ Vow of Hades (Death) | ✅ Complete |
+|   | ├ Vow of Poseidon (Sea) | ✅ Complete |
+|   | ├ Vow of Hermes (Travel) | ✅ Complete |
+|   | ├ Vow of Hercules (Strength) | ✅ Complete |
+|   | ├ Vow of Plutus (Wealth) | ✅ Complete |
+|   | ├ Vow of Chronos (Time) | ⏳ Pending |
+|   | ├ Vow of Hephaestus (Fire) | ⏳ Pending |
+|   | ├ Vow of Boreas (Ice) | ⏳ Pending |
+|   | ├ Vow of Erebus (Darkness) | ⏳ Pending |
+|   | ├ Vow of Apollo (Light) | ⏳ Pending |
+|   | └ Vow of Dionysus (Wine) | ⏳ Pending |
 | 6 | QA & Security — Pen testing, combat logging, duplication prevention | ⏳ Pending |
 | 7 | Optimization & Launch — World borders, Paper tuning, 48h beta | ⏳ Pending |
 
 ## Build
 
 ```bash
-./gradlew build
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew shadowJar
 ```
 
 Output: `build/libs/MythosSMP-<version>.jar`
+
+> Requires JDK 21 (the system default JDK 26 will fail Kotlin compilation).
 
 ## Commands
 
