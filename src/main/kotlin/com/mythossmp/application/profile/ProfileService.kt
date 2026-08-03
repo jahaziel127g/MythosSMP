@@ -14,9 +14,11 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.event.world.WorldSaveEvent
 import java.sql.SQLException
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.runBlocking
 
 class ProfileService(
     private val plugin: MythosSMP,
@@ -139,6 +141,11 @@ class ProfileService(
                 }
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun onWorldSave(event: WorldSaveEvent) {
+        scheduler.async { runBlocking { flushAll() } }
     }
 
     private fun loadOrCreateProfile(uuid: UUID, name: String): PlayerProfile {

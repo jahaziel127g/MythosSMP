@@ -2,10 +2,10 @@
 
 ## 1.6.1-Alpha — 2026-08-02
 
-### Meter persistence + Ares rage fix
-- Ares rage, Hades soul charges, and Zeus static charge now persist across logout — snapshotted into the profile on quit, restored on join
-- DB migration: `mythos_players` gains `ares_rage` / `hades_charges` / `zeus_charge` columns (auto-ALTER on boot for existing databases)
-- Fixed negative rage: both Ares damage handlers clamped to `[0, MAX_RAGE]` and negative `finalDamage` no longer drains rage below 0
+### Production hardening
+- Trust relations and unions are now **SQLite-backed** (`SqlTrustRepository`, `SqlUnionRepository`) — survive restarts and crashes; `mythos_unions` gains `active` column (auto-migrated on boot)
+- **WorldSaveEvent checkpoint**: every automatic world save flushes all dirty profiles asynchronously — continuous crash protection instead of relying only on `/stop`
+- In-memory trust/union repos retained as test doubles for the integration suite
 
 ## 1.6.0-Alpha — 2026-08-02
 
@@ -24,6 +24,11 @@
   - Trial: 3 waves of Spider/Zombie → Spider/Skeleton → Spider/Phantom
 - Altar menu reworked to 2 rows of 3 (slots 10/13/16/19/22/25); `GUIExploitStressTest` updated
 - Config sections `vows.poseidon.*` and `vows.hermes.*` with strict validation + fallback defaults
+
+### Meter persistence + Ares rage fix
+- Ares rage, Hades soul charges, and Zeus static charge now persist across logout — snapshotted into the profile on quit, restored on join
+- DB migration: `mythos_players` gains `ares_rage` / `hades_charges` / `zeus_charge` columns (auto-ALTER on boot for existing databases)
+- Fixed negative rage: both Ares damage handlers clamped to `[0, MAX_RAGE]`; negative `finalDamage` no longer drains rage below 0
 
 ## 1.5.1-Alpha — 2026-07-31
 

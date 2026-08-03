@@ -29,6 +29,7 @@ object TableSchema {
             union_id VARCHAR(36) PRIMARY KEY NOT NULL,
             party_a_uuid VARCHAR(36) NOT NULL UNIQUE,
             party_b_uuid VARCHAR(36) NOT NULL UNIQUE,
+            active INTEGER DEFAULT 1,
             creation_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (party_a_uuid) REFERENCES mythos_players(player_uuid) ON DELETE CASCADE,
             FOREIGN KEY (party_b_uuid) REFERENCES mythos_players(player_uuid) ON DELETE CASCADE

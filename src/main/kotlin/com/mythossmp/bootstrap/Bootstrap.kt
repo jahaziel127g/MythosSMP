@@ -25,9 +25,9 @@ import com.mythossmp.domain.vow.VowRegistry
 import com.mythossmp.domain.vow.VowZeus
 import com.mythossmp.infrastructure.config.ConfigManager
 import com.mythossmp.infrastructure.database.DatabaseManager
-import com.mythossmp.infrastructure.database.InMemoryTrustRepository
-import com.mythossmp.infrastructure.database.InMemoryUnionRepository
 import com.mythossmp.infrastructure.database.SqlProfileRepository
+import com.mythossmp.infrastructure.database.SqlTrustRepository
+import com.mythossmp.infrastructure.database.SqlUnionRepository
 import com.mythossmp.infrastructure.task.PaperScheduler
 import com.mythossmp.infrastructure.trial.ScrollItemRegistry
 import com.mythossmp.presentation.display.StatusDisplay
@@ -98,8 +98,8 @@ class Bootstrap(private val plugin: MythosSMP) {
 
     private fun initializeRepositories() {
         profileRepository = SqlProfileRepository(databaseManager)
-        trustRepository = InMemoryTrustRepository()
-        unionRepository = InMemoryUnionRepository()
+        trustRepository = SqlTrustRepository(databaseManager)
+        unionRepository = SqlUnionRepository(databaseManager)
     }
 
     private fun initializeServices() {

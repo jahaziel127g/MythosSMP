@@ -77,6 +77,20 @@ class DatabaseManager(
                     st.executeUpdate("ALTER TABLE mythos_players ADD COLUMN zeus_charge REAL DEFAULT 0.0")
                 }
             }
+
+            val unionColumns = mutableSetOf<String>()
+            conn.createStatement().use { st ->
+                st.executeQuery("PRAGMA table_info(mythos_unions)").use { rs ->
+                    while (rs.next()) {
+                        unionColumns.add(rs.getString("name"))
+                    }
+                }
+            }
+            conn.createStatement().use { st ->
+                if ("active" !in unionColumns) {
+                    st.executeUpdate("ALTER TABLE mythos_unions ADD COLUMN active INTEGER DEFAULT 1")
+                }
+            }
         }
     }
 
