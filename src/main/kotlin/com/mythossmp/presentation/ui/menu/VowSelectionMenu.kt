@@ -25,12 +25,20 @@ class VowSelectionMenu(private val plugin: MythosSMP) {
         16 to "zeus",
         19 to "hades",
         22 to "poseidon",
-        25 to "hermes"
+        25 to "hermes",
+        28 to "hercules",
+        31 to "plutus",
+        34 to "chronos",
+        37 to "hephaestus",
+        40 to "boreas",
+        43 to "erebus",
+        46 to "apollo",
+        49 to "dionysus"
     )
 
     fun open(player: Player) {
         val holder = VowMenuHolder(this)
-        val inventory = Bukkit.createInventory(holder, 27, menuTitle)
+        val inventory = Bukkit.createInventory(holder, 54, menuTitle)
         holder.inventory = inventory
 
         fillInventory(inventory, player)
@@ -49,10 +57,12 @@ class VowSelectionMenu(private val plugin: MythosSMP) {
             inventory.setItem(slot, createVowItem(vow, vow.key == activeVowKey, player))
         }
 
-        for (slot in 0 until 27) {
+        for (slot in 0 until 54) {
             if (inventory.getItem(slot) != null) continue
             val col = slot % 9
-            if (col == 0 || col == 8 || slot >= 18) {
+            val row = slot / 9
+            val isIconRow = deitySlots.keys.any { it / 9 == row }
+            if (col == 0 || col == 8 || !isIconRow) {
                 inventory.setItem(slot, createFillerItem())
             }
         }
@@ -124,6 +134,14 @@ class VowSelectionMenu(private val plugin: MythosSMP) {
             "hades" -> Material.WITHER_SKELETON_SKULL
             "poseidon" -> Material.TRIDENT
             "hermes" -> Material.FEATHER
+            "hercules" -> Material.IRON_AXE
+            "plutus" -> Material.GOLD_INGOT
+            "chronos" -> Material.CLOCK
+            "hephaestus" -> Material.BLAZE_POWDER
+            "boreas" -> Material.BLUE_ICE
+            "erebus" -> Material.BLACK_DYE
+            "apollo" -> Material.SUNFLOWER
+            "dionysus" -> Material.APPLE
             else -> Material.BARRIER
         }
     }

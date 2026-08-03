@@ -148,5 +148,35 @@ vows:
     curse:
       max-armor-tier: "CHAINMAIL"
       rejection-damage: 4.0
+  hercules:
+    enabled: true
+    passive:
+      resistance-amplifier: 0
+      kb-resistance: 0.20
+    ability1:
+      cooldown-seconds: 45
+      radius-blocks: 5.0
+      slam-damage: 8.0
+    ability2:
+      cooldown-seconds: 180
+      duration-seconds: 10.0
+      resistance-amplifier: 1
+    curse:
+      slowness-amplifier: 0
+  plutus:
+    enabled: true
+    passive:
+      hero-of-village-level: 4
+      consume-bypass-chance: 0.30
+    ability1:
+      cooldown-seconds: 180
+      duration-seconds: 30.0
+    ability2:
+      cooldown-seconds: 300
+      duration-seconds: 30.0
+    curse:
+      price-multiplier: 2
+      radius-blocks: 128.0
+      duration-hours: 4
 
 debug: false

@@ -3,12 +3,16 @@ package com.mythossmp.bootstrap
 import com.mythossmp.domain.vow.AresListeners
 import com.mythossmp.domain.vow.HadesListener
 import com.mythossmp.domain.vow.HermesListener
+import com.mythossmp.domain.vow.HerculesListener
 import com.mythossmp.domain.vow.LokiBackstabListener
+import com.mythossmp.domain.vow.PlutusListener
 import com.mythossmp.domain.vow.PoseidonListener
 import com.mythossmp.domain.vow.VeilFirstHitListener
 import com.mythossmp.domain.vow.VowAres
 import com.mythossmp.domain.vow.VowHades
 import com.mythossmp.domain.vow.VowHermes
+import com.mythossmp.domain.vow.VowHercules
+import com.mythossmp.domain.vow.VowPlutus
 import com.mythossmp.domain.vow.VowPoseidon
 import com.mythossmp.presentation.listener.CombatListener
 import com.mythossmp.presentation.listener.TrialListener
@@ -48,6 +52,8 @@ class ListenerRegistrar(private val container: ServiceContainer) {
         pm.registerEvents(VowPoseidon.curseInstance, plugin)
         pm.registerEvents(HermesListener(), plugin)
         pm.registerEvents(VowHermes.curseInstance, plugin)
+        pm.registerEvents(HerculesListener(), plugin)
+        pm.registerEvents(PlutusListener(), plugin)
         pm.registerEvents(VFXPresentationListener(), plugin)
         pm.registerEvents(WorldSaveListener(container.profileService, container.scheduler), plugin)
         pm.registerEvents(MenuListener(container.plugin), plugin)

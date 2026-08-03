@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.mythossmp"
-version = "1.6.0-alpha"
+version = "1.7.0-alpha"
 
 repositories {
     mavenCentral()

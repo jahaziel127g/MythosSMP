@@ -119,7 +119,7 @@ class MenuInteractionTest {
 
         assertTrue(event.isCancelled, "Altar interaction should be cancelled")
         assertNotNull(player.openInventory.topInventory, "Player should have an open inventory")
-        assertEquals(27, player.openInventory.topInventory.size, "Menu should be 27 slots (9x3)")
+        assertEquals(54, player.openInventory.topInventory.size, "Menu should be 54 slots (6x9)")
     }
 
     @Test

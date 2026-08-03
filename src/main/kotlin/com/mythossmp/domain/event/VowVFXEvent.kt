@@ -31,6 +31,13 @@ sealed class VowVFXEvent(
     data class HermesDash(override val location: Location) : VowVFXEvent(location)
     data class HermesZephyrActivate(override val location: Location) : VowVFXEvent(location)
 
+    data class HerculesTitanSlam(override val location: Location, val radius: Double) : VowVFXEvent(location)
+    data class HerculesUnbreakableWill(override val location: Location) : VowVFXEvent(location)
+
+    data class PlutusMerchantFortune(override val location: Location, val radius: Double) : VowVFXEvent(location)
+    data class PlutusGoldenTribute(override val location: Location) : VowVFXEvent(location)
+    data class PlutusGreedPenalty(override val location: Location, val radius: Double) : VowVFXEvent(location)
+
     data class VowSelectionActivate(override val location: Location, val vowKey: String) : VowVFXEvent(location)
 
     override fun getHandlers(): HandlerList = HANDLERS

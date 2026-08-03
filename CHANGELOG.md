@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.7.0-Alpha — 2026-08-03
+
+### Batch 1: two more selectable vows (plan Phase 5)
+
+- **Hercules (God of Strength)** — altar slot 28 (Iron Axe):
+  - Passive: permanent Resistance I + 20% flat knockback resistance (`EntityKnockbackEvent` scaling)
+  - `Titan's Slam` (45s): launch skyward; on landing, 5-block shockwave dealing 8 damage + knockback to untrusted entities
+  - `Unbreakable Will` (180s): 10s of knockback immunity, Resistance II, and immunity to slowness/poison/wither (`EntityPotionEffectEvent` filtering)
+  - Curse `Colossal Burden`: permanent Slowness I
+  - Trial: 3 waves of Zombie/Slime → Skeleton/Vindicator → Vindicator/Ravager
+- **Plutus (God of Wealth)** — altar slot 31 (Gold Ingot):
+  - Passive: permanent Hero of the Village V + 30% chance to preserve consumables (`PlayerItemConsumeEvent` cancel)
+  - `Merchant's Fortune` (180s): 30s of double ore drops, stacking multiplicatively with Fortune enchantments (`BlockBreakEvent` drop doubling)
+  - `Golden Tribute` (300s): 30s of 1-emerald villager prices (`MerchantRecipe` ingredient override, restored on window close)
+  - Curse `Grave Greed`: damaging a villager doubles prices for all villagers within 128 blocks for 4 hours (auto-restored)
+  - Trial: 3 waves of Zombie/Skeleton → Pillager/Vex → Evoker/Vindicator
+- Altar menu expanded to 6 rows with 14 reserved deity slots (10–49), icons for all 8 future vows pre-mapped
+- Config sections `vows.hercules.*` and `vows.plutus.*` with strict validation + fallback defaults
+- `GUIExploitStressTest` deity-slot set updated to the full 14-slot layout
+
 ## 1.6.1-Alpha — 2026-08-02
 
 ### Production hardening

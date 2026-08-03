@@ -19,7 +19,9 @@ import com.mythossmp.domain.trial.WaveConfig
 import com.mythossmp.domain.vow.VowAres
 import com.mythossmp.domain.vow.VowHades
 import com.mythossmp.domain.vow.VowHermes
+import com.mythossmp.domain.vow.VowHercules
 import com.mythossmp.domain.vow.VowLoki
+import com.mythossmp.domain.vow.VowPlutus
 import com.mythossmp.domain.vow.VowPoseidon
 import com.mythossmp.domain.vow.VowRegistry
 import com.mythossmp.domain.vow.VowZeus
@@ -124,6 +126,8 @@ class Bootstrap(private val plugin: MythosSMP) {
         vowRegistry.register(vowZeus)
         vowRegistry.register(VowPoseidon())
         vowRegistry.register(VowHermes())
+        vowRegistry.register(VowHercules())
+        vowRegistry.register(VowPlutus())
         registerDefaultTrials()
     }
 
@@ -246,6 +250,36 @@ class Bootstrap(private val plugin: MythosSMP) {
             ),
             baseHealth = 45.0,
             baseDamage = 5.0,
+            timeLimitSeconds = 600,
+            maxPartySize = 4
+        ))
+        trialService.registerDefaultConfig(TrialConfig(
+            key = "hercules",
+            displayName = "Hercules",
+            vowKey = "hercules",
+            description = "Outlast the Strength of the Demigod",
+            waves = listOf(
+                WaveConfig(1, listOf(MobSpawnEntry(EntityType.ZOMBIE, 4), MobSpawnEntry(EntityType.SLIME, 2))),
+                WaveConfig(2, listOf(MobSpawnEntry(EntityType.SKELETON, 4), MobSpawnEntry(EntityType.VINDICATOR, 2))),
+                WaveConfig(3, listOf(MobSpawnEntry(EntityType.VINDICATOR, 3), MobSpawnEntry(EntityType.RAVAGER, 1)))
+            ),
+            baseHealth = 65.0,
+            baseDamage = 7.0,
+            timeLimitSeconds = 600,
+            maxPartySize = 4
+        ))
+        trialService.registerDefaultConfig(TrialConfig(
+            key = "plutus",
+            displayName = "Plutus",
+            vowKey = "plutus",
+            description = "Prove your worth to the God of Wealth",
+            waves = listOf(
+                WaveConfig(1, listOf(MobSpawnEntry(EntityType.ZOMBIE, 4), MobSpawnEntry(EntityType.SKELETON, 2))),
+                WaveConfig(2, listOf(MobSpawnEntry(EntityType.PILLAGER, 3), MobSpawnEntry(EntityType.VEX, 2))),
+                WaveConfig(3, listOf(MobSpawnEntry(EntityType.EVOKER, 2), MobSpawnEntry(EntityType.VINDICATOR, 3)))
+            ),
+            baseHealth = 50.0,
+            baseDamage = 5.5,
             timeLimitSeconds = 600,
             maxPartySize = 4
         ))

@@ -180,6 +180,71 @@ class VFXPresentationListener : Listener {
                 )
             }
 
+            is VowVFXEvent.HerculesTitanSlam -> {
+                world.spawnParticle(
+                    Particle.DUST,
+                    event.location,
+                    220, event.radius, 0.5, event.radius, 0.3,
+                    Particle.DustOptions(Color.fromRGB(0xC8A951), 2.2f)
+                )
+                world.spawnParticle(
+                    Particle.EXPLOSION,
+                    event.location.add(0.0, 0.5, 0.0),
+                    1, 0.3, 0.3, 0.3, 0.0
+                )
+            }
+
+            is VowVFXEvent.HerculesUnbreakableWill -> {
+                world.spawnParticle(
+                    Particle.DUST,
+                    event.location.add(0.0, 1.0, 0.0),
+                    80, 0.6, 0.8, 0.6, 0.15,
+                    Particle.DustOptions(Color.fromRGB(0xFFB300), 2.0f)
+                )
+                world.spawnParticle(
+                    Particle.END_ROD,
+                    event.location.add(0.0, 1.0, 0.0),
+                    40, 0.4, 0.6, 0.4, 0.05
+                )
+            }
+
+            is VowVFXEvent.PlutusMerchantFortune -> {
+                world.spawnParticle(
+                    Particle.DUST,
+                    event.location.add(0.0, 1.0, 0.0),
+                    80, event.radius, 0.6, event.radius, 0.1,
+                    Particle.DustOptions(Color.fromRGB(0xFFD700), 1.8f)
+                )
+                world.spawnParticle(
+                    Particle.CRIT,
+                    event.location.add(0.0, 1.0, 0.0),
+                    30, 0.3, 0.3, 0.3, 0.1
+                )
+            }
+
+            is VowVFXEvent.PlutusGoldenTribute -> {
+                world.spawnParticle(
+                    Particle.DUST,
+                    event.location.add(0.0, 1.0, 0.0),
+                    60, 0.5, 0.5, 0.5, 0.1,
+                    Particle.DustOptions(Color.fromRGB(0x00C853), 1.8f)
+                )
+                world.spawnParticle(
+                    Particle.END_ROD,
+                    event.location.add(0.0, 1.0, 0.0),
+                    30, 0.4, 0.4, 0.4, 0.05
+                )
+            }
+
+            is VowVFXEvent.PlutusGreedPenalty -> {
+                world.spawnParticle(
+                    Particle.DUST,
+                    event.location,
+                    150, event.radius, 1.0, event.radius, 0.1,
+                    Particle.DustOptions(Color.fromRGB(0x7A2E0E), 1.5f)
+                )
+            }
+
             is VowVFXEvent.VowSelectionActivate -> {
                 val color = when (event.vowKey) {
                     "ares" -> Color.fromRGB(0xFF0000)
@@ -188,6 +253,8 @@ class VFXPresentationListener : Listener {
                     "zeus" -> Color.fromRGB(0xFFFF00)
                     "poseidon" -> Color.fromRGB(0x0077FF)
                     "hermes" -> Color.fromRGB(0xFFD700)
+                    "hercules" -> Color.fromRGB(0xFFAA00)
+                    "plutus" -> Color.fromRGB(0x32CD32)
                     else -> Color.fromRGB(0xFFFFFF)
                 }
                 world.spawnParticle(

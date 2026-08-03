@@ -39,6 +39,8 @@ class StatusDisplay(
             "hades" -> updateHadesActionBar(player)
             "poseidon" -> updatePoseidonActionBar(player)
             "hermes" -> updateHermesActionBar(player)
+            "hercules" -> updateHerculesActionBar(player)
+            "plutus" -> updatePlutusActionBar(player)
         }
         if (player.isOp) {
             updateDevSidebar(player, activeKey)
@@ -63,6 +65,8 @@ class StatusDisplay(
                 "hades" -> updateHadesActionBar(player)
                 "poseidon" -> updatePoseidonActionBar(player)
                 "hermes" -> updateHermesActionBar(player)
+                "hercules" -> updateHerculesActionBar(player)
+                "plutus" -> updatePlutusActionBar(player)
             }
 
             if (player.isOp) {
@@ -220,6 +224,58 @@ class StatusDisplay(
         )
     }
 
+    private fun updateHerculesActionBar(player: Player) {
+        val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "hercules-titan-slam")
+        val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "hercules-unbreakable-will")
+
+        val ts = if (cd1 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd1), NamedTextColor.RED)
+        val uw = if (cd2 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd2), NamedTextColor.RED)
+
+        val impact = if (com.mythossmp.domain.vow.VowHercules.willPlayers.contains(player.uniqueId))
+            Component.text("\u26A1", NamedTextColor.GOLD)
+        else Component.empty()
+
+        player.sendActionBar(Component.text()
+            .append(Component.text("\uD83D\uDCAA ", NamedTextColor.GOLD))
+            .append(impact)
+            .append(Component.text("TS:", NamedTextColor.GRAY))
+            .append(ts)
+            .append(Component.text("  ", NamedTextColor.DARK_GRAY))
+            .append(Component.text("UW:", NamedTextColor.GRAY))
+            .append(uw)
+            .build()
+        )
+    }
+
+    private fun updatePlutusActionBar(player: Player) {
+        val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "plutus-merchants-fortune")
+        val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "plutus-golden-tribute")
+
+        val mf = if (cd1 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd1), NamedTextColor.RED)
+        val gt = if (cd2 <= 0) Component.text("READY", NamedTextColor.GREEN)
+                 else Component.text(formatTime(cd2), NamedTextColor.RED)
+
+        val active = when {
+            com.mythossmp.domain.vow.VowPlutus.fortunePlayers.contains(player.uniqueId) -> Component.text("2x", NamedTextColor.GOLD)
+            com.mythossmp.domain.vow.VowPlutus.tributePlayers.contains(player.uniqueId) -> Component.text("1\uD83D\uDCB0", NamedTextColor.GREEN)
+            else -> Component.empty()
+        }
+
+        player.sendActionBar(Component.text()
+            .append(Component.text("\uD83D\uDCB0 ", NamedTextColor.GOLD))
+            .append(active)
+            .append(Component.text("MF:", NamedTextColor.GRAY))
+            .append(mf)
+            .append(Component.text("  ", NamedTextColor.DARK_GRAY))
+            .append(Component.text("GT:", NamedTextColor.GRAY))
+            .append(gt)
+            .build()
+        )
+    }
+
     private fun buildChargeBar(charge: Double): Component {
         val filled = (charge * 10).toInt().coerceIn(0, 10)
         val empty = 10 - filled
@@ -369,6 +425,24 @@ class StatusDisplay(
                 list.add(if (cd1 <= 0) Pair("\u00A7aREADY", 2) else Pair("\u00A7c${cd1}s", 2))
                 list.add("\u00A77Zephyr Wing:" to 1)
                 list.add(if (cd2 <= 0) Pair("\u00A7aREADY", 0) else Pair("\u00A7c${cd2}s", 0))
+            }
+            "hercules" -> {
+                val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "hercules-titan-slam")
+                val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "hercules-unbreakable-will")
+                list.add("\u00A77\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" to 6)
+                list.add("\u00A77Titan's Slam:" to 5)
+                list.add(if (cd1 <= 0) Pair("\u00A7aREADY", 4) else Pair("\u00A7c${cd1}s", 4))
+                list.add("\u00A77Unbreakable Will:" to 3)
+                list.add(if (cd2 <= 0) Pair("\u00A7aREADY", 2) else Pair("\u00A7c${cd2}s", 2))
+            }
+            "plutus" -> {
+                val cd1 = plugin.abilityExecutor.getCooldownSeconds(player, "plutus-merchants-fortune")
+                val cd2 = plugin.abilityExecutor.getCooldownSeconds(player, "plutus-golden-tribute")
+                list.add("\u00A77\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" to 6)
+                list.add("\u00A77Merchant's Fortune:" to 5)
+                list.add(if (cd1 <= 0) Pair("\u00A7aREADY", 4) else Pair("\u00A7c${cd1}s", 4))
+                list.add("\u00A77Golden Tribute:" to 3)
+                list.add(if (cd2 <= 0) Pair("\u00A7aREADY", 2) else Pair("\u00A7c${cd2}s", 2))
             }
         }
 

@@ -57,6 +57,32 @@ class ConfigManager(private val plugin: MythosSMP) {
         val rejectionDamage: Double
     )
 
+    data class HerculesConfig(
+        val enabled: Boolean,
+        val passiveResistanceAmplifier: Int,
+        val passiveKbResistance: Double,
+        val slamCooldown: Int,
+        val slamRadius: Double,
+        val slamDamage: Double,
+        val willCooldown: Int,
+        val willDurationSeconds: Double,
+        val willResistanceAmplifier: Int,
+        val curseSlownessAmplifier: Int
+    )
+
+    data class PlutusConfig(
+        val enabled: Boolean,
+        val heroOfVillageAmplifier: Int,
+        val consumeBypassChance: Double,
+        val fortuneCooldown: Int,
+        val fortuneDurationSeconds: Double,
+        val tributeCooldown: Int,
+        val tributeDurationSeconds: Double,
+        val greedPriceMultiplier: Int,
+        val greedRadiusBlocks: Double,
+        val greedDurationHours: Int
+    )
+
     private val vowDefaults = mapOf(
         "loki" to VowConfig(
             enabled = true,
@@ -109,6 +135,14 @@ class ConfigManager(private val plugin: MythosSMP) {
             }
             if (vowKey == "hermes") {
                 validateHermesSection(section)
+                continue
+            }
+            if (vowKey == "hercules") {
+                validateHerculesSection(section)
+                continue
+            }
+            if (vowKey == "plutus") {
+                validatePlutusSection(section)
                 continue
             }
             val defaults = vowDefaults[vowKey] ?: continue
@@ -319,8 +353,197 @@ class ConfigManager(private val plugin: MythosSMP) {
         )
     }
 
-    private fun validateVowSection(key: String, section: ConfigurationSection, defaults: VowConfig) {
-        section.getBoolean("enabled", defaults.enabled).also { section.set("enabled", it) }
+    private fun validateHerculesSection(section: ConfigurationSection) {
+        section.getBoolean("enabled", true).also { section.set("enabled", it) }
+
+        val passive = section.getConfigurationSection("passive")
+        val ab1 = section.getConfigurationSection("ability1")
+        val ab2 = section.getConfigurationSection("ability2")
+        val curse = section.getConfigurationSection("curse")
+
+        if (passive != null) {
+            val ra = passive.getInt("resistance-amplifier", 0)
+            if (ra !in 0..4) {
+                plugin.logger.warning("[hercules] passive.resistance-amplifier ($ra) out of range [0..4]; using default 0.")
+                passive.set("resistance-amplifier", 0)
+            }
+            val kb = passive.getDouble("kb-resistance", 0.20)
+            if (kb < 0 || kb > 1.0) {
+                plugin.logger.warning("[hercules] passive.kb-resistance ($kb) out of range [0..1]; using default 0.20.")
+                passive.set("kb-resistance", 0.20)
+            }
+        }
+        if (ab1 != null) {
+            val cd = ab1.getInt("cooldown-seconds", 45)
+            if (cd !in 1..300) {
+                plugin.logger.warning("[hercules] ability1.cooldown-seconds ($cd) out of range [1..300]; using default 45.")
+                ab1.set("cooldown-seconds", 45)
+            }
+            val radius = ab1.getDouble("radius-blocks", 5.0)
+            if (radius <= 0 || radius > 50.0) {
+                plugin.logger.warning("[hercules] ability1.radius-blocks ($radius) out of range (0..50]; using default 5.0.")
+                ab1.set("radius-blocks", 5.0)
+            }
+            val dmg = ab1.getDouble("slam-damage", 8.0)
+            if (dmg <= 0 || dmg > 100.0) {
+                plugin.logger.warning("[hercules] ability1.slam-damage ($dmg) out of range (0..100]; using default 8.0.")
+                ab1.set("slam-damage", 8.0)
+            }
+        }
+        if (ab2 != null) {
+            val cd = ab2.getInt("cooldown-seconds", 180)
+            if (cd !in 1..300) {
+                plugin.logger.warning("[hercules] ability2.cooldown-seconds ($cd) out of range [1..300]; using default 180.")
+                ab2.set("cooldown-seconds", 180)
+            }
+            val dur = ab2.getDouble("duration-seconds", 10.0)
+            if (dur <= 0 || dur > 60.0) {
+                plugin.logger.warning("[hercules] ability2.duration-seconds ($dur) out of range (0..60]; using default 10.0.")
+                ab2.set("duration-seconds", 10.0)
+            }
+            val ra = ab2.getInt("resistance-amplifier", 1)
+            if (ra !in 0..4) {
+                plugin.logger.warning("[hercules] ability2.resistance-amplifier ($ra) out of range [0..4]; using default 1.")
+                ab2.set("resistance-amplifier", 1)
+            }
+        }
+        if (curse != null) {
+            val sa = curse.getInt("slowness-amplifier", 0)
+            if (sa !in 0..4) {
+                plugin.logger.warning("[hercules] curse.slowness-amplifier ($sa) out of range [0..4]; using default 0.")
+                curse.set("slowness-amplifier", 0)
+            }
+        }
+    }
+
+    fun getHerculesConfig(): HerculesConfig {
+        val section = config.getConfigurationSection("vows.hercules")
+            ?: return HerculesConfig(
+                enabled = true,
+                passiveResistanceAmplifier = 0,
+                passiveKbResistance = 0.20,
+                slamCooldown = 45,
+                slamRadius = 5.0,
+                slamDamage = 8.0,
+                willCooldown = 180,
+                willDurationSeconds = 10.0,
+                willResistanceAmplifier = 1,
+                curseSlownessAmplifier = 0
+            )
+        val passive = section.getConfigurationSection("passive")
+        val ab1 = section.getConfigurationSection("ability1")
+        val ab2 = section.getConfigurationSection("ability2")
+        val curse = section.getConfigurationSection("curse")
+        return HerculesConfig(
+            enabled = section.getBoolean("enabled", true),
+            passiveResistanceAmplifier = passive?.getInt("resistance-amplifier") ?: 0,
+            passiveKbResistance = passive?.getDouble("kb-resistance") ?: 0.20,
+            slamCooldown = ab1?.getInt("cooldown-seconds") ?: 45,
+            slamRadius = ab1?.getDouble("radius-blocks") ?: 5.0,
+            slamDamage = ab1?.getDouble("slam-damage") ?: 8.0,
+            willCooldown = ab2?.getInt("cooldown-seconds") ?: 180,
+            willDurationSeconds = ab2?.getDouble("duration-seconds") ?: 10.0,
+            willResistanceAmplifier = ab2?.getInt("resistance-amplifier") ?: 1,
+            curseSlownessAmplifier = curse?.getInt("slowness-amplifier") ?: 0
+        )
+    }
+
+    private fun validatePlutusSection(section: ConfigurationSection) {
+        section.getBoolean("enabled", true).also { section.set("enabled", it) }
+
+        val passive = section.getConfigurationSection("passive")
+        val ab1 = section.getConfigurationSection("ability1")
+        val ab2 = section.getConfigurationSection("ability2")
+        val curse = section.getConfigurationSection("curse")
+
+        if (passive != null) {
+            val hva = passive.getInt("hero-of-village-level", 4)
+            if (hva !in 0..4) {
+                plugin.logger.warning("[plutus] passive.hero-of-village-level ($hva) out of range [0..4]; using default 4.")
+                passive.set("hero-of-village-level", 4)
+            }
+            val chance = passive.getDouble("consume-bypass-chance", 0.30)
+            if (chance !in 0.0..1.0) {
+                plugin.logger.warning("[plutus] passive.consume-bypass-chance ($chance) out of range [0..1]; using default 0.30.")
+                passive.set("consume-bypass-chance", 0.30)
+            }
+        }
+        if (ab1 != null) {
+            val cd = ab1.getInt("cooldown-seconds", 180)
+            if (cd !in 1..300) {
+                plugin.logger.warning("[plutus] ability1.cooldown-seconds ($cd) out of range [1..300]; using default 180.")
+                ab1.set("cooldown-seconds", 180)
+            }
+            val dur = ab1.getDouble("duration-seconds", 30.0)
+            if (dur <= 0 || dur > 120.0) {
+                plugin.logger.warning("[plutus] ability1.duration-seconds ($dur) out of range (0..120]; using default 30.0.")
+                ab1.set("duration-seconds", 30.0)
+            }
+        }
+        if (ab2 != null) {
+            val cd = ab2.getInt("cooldown-seconds", 300)
+            if (cd !in 1..300) {
+                plugin.logger.warning("[plutus] ability2.cooldown-seconds ($cd) out of range [1..300]; using default 300.")
+                ab2.set("cooldown-seconds", 300)
+            }
+            val dur = ab2.getDouble("duration-seconds", 30.0)
+            if (dur <= 0 || dur > 120.0) {
+                plugin.logger.warning("[plutus] ability2.duration-seconds ($dur) out of range (0..120]; using default 30.0.")
+                ab2.set("duration-seconds", 30.0)
+            }
+        }
+        if (curse != null) {
+            val pm = curse.getInt("price-multiplier", 2)
+            if (pm !in 1..10) {
+                plugin.logger.warning("[plutus] curse.price-multiplier ($pm) out of range [1..10]; using default 2.")
+                curse.set("price-multiplier", 2)
+            }
+            val radius = curse.getDouble("radius-blocks", 128.0)
+            if (radius <= 0 || radius > 512.0) {
+                plugin.logger.warning("[plutus] curse.radius-blocks ($radius) out of range (0..512]; using default 128.0.")
+                curse.set("radius-blocks", 128.0)
+            }
+            val hours = curse.getInt("duration-hours", 4)
+            if (hours !in 1..72) {
+                plugin.logger.warning("[plutus] curse.duration-hours ($hours) out of range [1..72]; using default 4.")
+                curse.set("duration-hours", 4)
+            }
+        }
+    }
+
+    fun getPlutusConfig(): PlutusConfig {
+        val section = config.getConfigurationSection("vows.plutus")
+            ?: return PlutusConfig(
+                enabled = true,
+                heroOfVillageAmplifier = 4,
+                consumeBypassChance = 0.30,
+                fortuneCooldown = 180,
+                fortuneDurationSeconds = 30.0,
+                tributeCooldown = 300,
+                tributeDurationSeconds = 30.0,
+                greedPriceMultiplier = 2,
+                greedRadiusBlocks = 128.0,
+                greedDurationHours = 4
+            )
+        val passive = section.getConfigurationSection("passive")
+        val ab1 = section.getConfigurationSection("ability1")
+        val ab2 = section.getConfigurationSection("ability2")
+        val curse = section.getConfigurationSection("curse")
+        return PlutusConfig(
+            enabled = section.getBoolean("enabled", true),
+            heroOfVillageAmplifier = passive?.getInt("hero-of-village-level") ?: 4,
+            consumeBypassChance = passive?.getDouble("consume-bypass-chance") ?: 0.30,
+            fortuneCooldown = ab1?.getInt("cooldown-seconds") ?: 180,
+            fortuneDurationSeconds = ab1?.getDouble("duration-seconds") ?: 30.0,
+            tributeCooldown = ab2?.getInt("cooldown-seconds") ?: 300,
+            tributeDurationSeconds = ab2?.getDouble("duration-seconds") ?: 30.0,
+            greedPriceMultiplier = curse?.getInt("price-multiplier") ?: 2,
+            greedRadiusBlocks = curse?.getDouble("radius-blocks") ?: 128.0,
+            greedDurationHours = curse?.getInt("duration-hours") ?: 4
+        )
+    }
+
+    private fun validateVowSection(key: String, section: ConfigurationSection, defaults: VowConfig) {        section.getBoolean("enabled", defaults.enabled).also { section.set("enabled", it) }
 
         val curseSection = section.getConfigurationSection("curse")
         if (curseSection != null) {
