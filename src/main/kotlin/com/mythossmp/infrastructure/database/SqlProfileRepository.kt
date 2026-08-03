@@ -22,7 +22,10 @@ class SqlProfileRepository(private val databaseManager: DatabaseManager) : Profi
                             playerUuid = uuid,
                             lastKnownName = rs.getString("last_known_name"),
                             activeVow = rawActiveVow?.lowercase()?.removePrefix("vow-"),
-                            cooldownMultiplier = if (cmNull) 1.0 else cooldownMultiplier
+                            cooldownMultiplier = if (cmNull) 1.0 else cooldownMultiplier,
+                            aresRage = rs.getInt("ares_rage"),
+                            hadesCharges = rs.getInt("hades_charges"),
+                            zeusCharge = rs.getDouble("zeus_charge")
                         )
                     }
                 }
@@ -52,12 +55,15 @@ class SqlProfileRepository(private val databaseManager: DatabaseManager) : Profi
         databaseManager.getConnection().use { conn ->
             conn.prepareStatement(
                 """
-                INSERT INTO mythos_players (player_uuid, last_known_name, active_vow, cooldown_multiplier, last_updated)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                INSERT INTO mythos_players (player_uuid, last_known_name, active_vow, cooldown_multiplier, ares_rage, hades_charges, zeus_charge, last_updated)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(player_uuid) DO UPDATE SET
                     last_known_name = EXCLUDED.last_known_name,
                     active_vow = EXCLUDED.active_vow,
                     cooldown_multiplier = EXCLUDED.cooldown_multiplier,
+                    ares_rage = EXCLUDED.ares_rage,
+                    hades_charges = EXCLUDED.hades_charges,
+                    zeus_charge = EXCLUDED.zeus_charge,
                     last_updated = CURRENT_TIMESTAMP
                 """.trimIndent()
             ).use { stmt ->
@@ -65,6 +71,9 @@ class SqlProfileRepository(private val databaseManager: DatabaseManager) : Profi
                 stmt.setString(2, profile.lastKnownName)
                 stmt.setString(3, profile.activeVow)
                 stmt.setDouble(4, profile.cooldownMultiplier)
+                stmt.setInt(5, profile.aresRage)
+                stmt.setInt(6, profile.hadesCharges)
+                stmt.setDouble(7, profile.zeusCharge)
                 stmt.executeUpdate()
             }
         }

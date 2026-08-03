@@ -53,6 +53,31 @@ class DatabaseManager(
                 close()
             }
         }
+        migrateSchema()
+    }
+
+    private fun migrateSchema() {
+        getConnection().use { conn ->
+            val columns = mutableSetOf<String>()
+            conn.createStatement().use { st ->
+                st.executeQuery("PRAGMA table_info(mythos_players)").use { rs ->
+                    while (rs.next()) {
+                        columns.add(rs.getString("name"))
+                    }
+                }
+            }
+            conn.createStatement().use { st ->
+                if ("ares_rage" !in columns) {
+                    st.executeUpdate("ALTER TABLE mythos_players ADD COLUMN ares_rage INTEGER DEFAULT 0")
+                }
+                if ("hades_charges" !in columns) {
+                    st.executeUpdate("ALTER TABLE mythos_players ADD COLUMN hades_charges INTEGER DEFAULT 0")
+                }
+                if ("zeus_charge" !in columns) {
+                    st.executeUpdate("ALTER TABLE mythos_players ADD COLUMN zeus_charge REAL DEFAULT 0.0")
+                }
+            }
+        }
     }
 
     fun getConnection(): Connection {

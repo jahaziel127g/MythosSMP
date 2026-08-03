@@ -4,6 +4,8 @@ import com.mythossmp.MythosSMP
 import com.mythossmp.application.task.Scheduler
 import com.mythossmp.domain.model.PlayerProfile
 import com.mythossmp.domain.vow.Bloodthorns
+import com.mythossmp.domain.vow.VowAres
+import com.mythossmp.domain.vow.VowHades
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.bukkit.event.EventHandler
@@ -74,6 +76,11 @@ class ProfileService(
                 vow.passiveEffects.forEach { it.apply(event.player) }
                 vow.curse.apply(event.player)
             }
+            when (activeKey.removePrefix("vow-")) {
+                "ares" -> VowAres.restoreRage(uuid, profile.aresRage)
+                "hades" -> VowHades.restoreCharges(uuid, profile.hadesCharges)
+                "zeus" -> plugin.vowZeus.restoreCharge(uuid, profile.zeusCharge)
+            }
         }
     }
 
@@ -84,13 +91,20 @@ class ProfileService(
 
         if (profile != null) {
             val vow = profile.activeVow?.let { plugin.vowRegistry.getVowByActiveKey(it) }
+
+            val snapshot = when (profile.activeVow?.removePrefix("vow-")) {
+                "ares" -> profile.copy(aresRage = VowAres.getRage(uuid), dirty = true)
+                "hades" -> profile.copy(hadesCharges = VowHades.getCharges(uuid), dirty = true)
+                "zeus" -> profile.copy(zeusCharge = plugin.vowZeus.getCharge(uuid), dirty = true)
+                else -> profile
+            }
+
             if (vow != null) {
                 vow.passiveEffects.forEach { it.remove(event.player) }
                 vow.curse.remove(event.player)
             }
 
-            if (profile.dirty) {
-                val snapshot = profile
+            if (snapshot.dirty) {
                 scheduler.async { saveProfileSync(snapshot) }
             }
         }

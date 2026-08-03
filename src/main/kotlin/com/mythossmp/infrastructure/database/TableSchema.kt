@@ -7,6 +7,9 @@ object TableSchema {
             last_known_name VARCHAR(16) NOT NULL,
             active_vow VARCHAR(32) DEFAULT NULL,
             cooldown_multiplier REAL DEFAULT 1.0,
+            ares_rage INTEGER DEFAULT 0,
+            hades_charges INTEGER DEFAULT 0,
+            zeus_charge REAL DEFAULT 0.0,
             last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """

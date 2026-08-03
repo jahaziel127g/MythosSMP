@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1-Alpha — 2026-08-02
+
+### Meter persistence + Ares rage fix
+- Ares rage, Hades soul charges, and Zeus static charge now persist across logout — snapshotted into the profile on quit, restored on join
+- DB migration: `mythos_players` gains `ares_rage` / `hades_charges` / `zeus_charge` columns (auto-ALTER on boot for existing databases)
+- Fixed negative rage: both Ares damage handlers clamped to `[0, MAX_RAGE]` and negative `finalDamage` no longer drains rage below 0
+
 ## 1.6.0-Alpha — 2026-08-02
 
 ### Two new selectable vows (per implementation plan)

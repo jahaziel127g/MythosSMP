@@ -40,6 +40,9 @@ class VowAres : Vow {
 
         fun getRage(playerUuid: UUID): Int = rageMap[playerUuid] ?: 0
         fun getMaxRage(): Int = MAX_RAGE
+        fun restoreRage(playerUuid: UUID, rage: Int) {
+            rageMap[playerUuid] = rage.coerceIn(0, MAX_RAGE)
+        }
     }
 }
 
@@ -97,7 +100,7 @@ class AresPassive : PassiveEffect, Listener {
 
         val newRage = rageMap.compute(damager.uniqueId) { _, current ->
             if (current == null) return@compute null
-            (current + event.finalDamage.toInt()).coerceAtMost(MAX_RAGE)
+            (current + event.finalDamage.toInt().coerceAtLeast(0)).coerceIn(0, MAX_RAGE)
         } ?: return
 
         if (newRage >= MAX_RAGE) {
@@ -111,7 +114,7 @@ class AresPassive : PassiveEffect, Listener {
         lastCombatTime[entity.uniqueId] = System.currentTimeMillis()
         val newRage = rageMap.compute(entity.uniqueId) { _, current ->
             if (current == null) return@compute null
-            (current + event.finalDamage.toInt() * 2).coerceAtMost(MAX_RAGE)
+            (current + event.finalDamage.toInt().coerceAtLeast(0) * 2).coerceIn(0, MAX_RAGE)
         } ?: return
 
         if (newRage >= MAX_RAGE) {

@@ -53,6 +53,9 @@ class VowHades : Vow {
             val cfg = MythosSMP.instance.configManager.getVowConfig("hades")
             return cfg.maxCharges
         }
+        fun restoreCharges(playerUuid: UUID, charges: Int) {
+            soulChargesMap[playerUuid] = charges.coerceIn(0, getMaxCharges())
+        }
     }
 }
 

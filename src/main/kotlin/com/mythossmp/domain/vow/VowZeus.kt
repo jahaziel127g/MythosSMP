@@ -43,6 +43,12 @@ class VowZeus : Vow {
             false
         }
     }
+
+    fun restoreCharge(uuid: UUID, charge: Double) {
+        if (charge > 0.0) {
+            chargeRegistry[uuid] = charge.coerceIn(0.0, 1.0)
+        }
+    }
 }
 
 class ZeusStaticCharge : PassiveEffect {
