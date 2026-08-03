@@ -14,11 +14,9 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
-import org.bukkit.event.world.WorldSaveEvent
 import java.sql.SQLException
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.coroutines.runBlocking
 
 class ProfileService(
     private val plugin: MythosSMP,
@@ -143,9 +141,21 @@ class ProfileService(
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    fun onWorldSave(event: WorldSaveEvent) {
-        scheduler.async { runBlocking { flushAll() } }
+    fun collectDirtySnapshots(): List<PlayerProfile> {
+        return cache.entries.toList().mapNotNull { (_, profile) ->
+            profile.takeIf { it.dirty }
+        }
+    }
+
+    suspend fun persistSnapshots(snapshots: List<PlayerProfile>) = withContext(Dispatchers.IO) {
+        for (profile in snapshots) {
+            try {
+                saveProfileSync(profile)
+                cache.computeIfPresent(profile.playerUuid) { _, _ -> profile.copy(dirty = false) }
+            } catch (e: Exception) {
+                plugin.logger.severe("Failed to persist profile ${profile.playerUuid}: ${e.message}")
+            }
+        }
     }
 
     private fun loadOrCreateProfile(uuid: UUID, name: String): PlayerProfile {

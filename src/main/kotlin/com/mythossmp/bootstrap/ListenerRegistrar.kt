@@ -14,6 +14,7 @@ import com.mythossmp.presentation.listener.CombatListener
 import com.mythossmp.presentation.listener.TrialListener
 import com.mythossmp.presentation.listener.UnionListener
 import com.mythossmp.presentation.listener.VFXPresentationListener
+import com.mythossmp.presentation.listener.WorldSaveListener
 import com.mythossmp.presentation.listener.ZeusListener
 import com.mythossmp.presentation.ui.menu.AltarListener
 import com.mythossmp.presentation.ui.menu.MenuListener
@@ -48,6 +49,7 @@ class ListenerRegistrar(private val container: ServiceContainer) {
         pm.registerEvents(HermesListener(), plugin)
         pm.registerEvents(VowHermes.curseInstance, plugin)
         pm.registerEvents(VFXPresentationListener(), plugin)
+        pm.registerEvents(WorldSaveListener(container.profileService, container.scheduler), plugin)
         pm.registerEvents(MenuListener(container.plugin), plugin)
         pm.registerEvents(AltarListener(container.plugin), plugin)
         pm.registerEvents(VowConfirmationListener(container.plugin, container.scheduler), plugin)
