@@ -26,7 +26,7 @@ dependencies {
     compileOnly("net.kyori:adventure-text-minimessage:4.17.0")
 
     testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.2")
     testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
