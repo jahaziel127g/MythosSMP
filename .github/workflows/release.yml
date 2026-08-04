@@ -31,3 +31,4 @@ jobs:
         with:
           files: build/libs/MythosSMP-*.jar
           body_path: CHANGELOG.md
+          prerelease: ${{ contains(github.ref, '-alpha') || contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
