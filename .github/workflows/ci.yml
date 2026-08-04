@@ -7,6 +7,7 @@ on:
       - '*.md'
       - '.gitignore'
       - '.opencode/**'
+      - '.github/dependabot.yml'
       - 'Mythos_SMP_Full_Project_Summary_Implementation_Plan.docx.txt'
       - 'LICENSE'
   pull_request:
@@ -15,8 +16,14 @@ on:
       - '*.md'
       - '.gitignore'
       - '.opencode/**'
+      - '.github/dependabot.yml'
       - 'Mythos_SMP_Full_Project_Summary_Implementation_Plan.docx.txt'
       - 'LICENSE'
+
+# Cancel in-progress builds if a new push arrives on the same branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -27,6 +34,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -36,5 +46,5 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build
-        run: ./gradlew build
+      - name: Build & Run All Test Suites
+        run: ./gradlew build integrationTest stressTest shadowJar
