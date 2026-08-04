@@ -1,0 +1,42 @@
+# .github/dependabot.yml
+version: 2
+updates:
+  # 1. Gradle Dependencies & Plugins (Paper API, HikariCP, Kotlin libraries, etc.)
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    target-branch: "main"
+    labels:
+      - "dependencies"
+      - "gradle"
+    # Consolidates patch and minor version bumps into a single clean PR to avoid clutter
+    groups:
+      minor-and-patch-gradle:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # 2. GitHub Actions Workflows (actions/checkout, setup-java, setup-gradle, action-gh-release)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    target-branch: "main"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      actions-updates:
+        patterns:
+          - "*"
