@@ -13,7 +13,7 @@ import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.entity.EntityKnockbackEvent
+import org.bukkit.event.entity.EntityKnockbackByEntityEvent
 import org.bukkit.event.entity.EntityPotionEffectEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.potion.PotionEffect
@@ -94,7 +94,8 @@ class HerculesListener : Listener {
     }
 
     @EventHandler
-    fun onKnockback(event: EntityKnockbackEvent) {
+    @Suppress("DEPRECATION")
+    fun onKnockback(event: EntityKnockbackByEntityEvent) {
         val entity = event.entity
         if (entity !is Player) return
         val uuid = entity.uniqueId
