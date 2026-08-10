@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:26.2.build.103-stable")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
@@ -25,7 +25,7 @@ dependencies {
     compileOnly("net.kyori:adventure-api:4.17.0")
     compileOnly("net.kyori:adventure-text-minimessage:4.17.0")
 
-    testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    testImplementation("io.papermc.paper:paper-api:26.2.build.103-stable")
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.2")
     testImplementation("org.mockito:mockito-core:5.23.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.23.0")
@@ -42,7 +42,7 @@ sourceSets {
 
 dependencies {
     "testIntegrationImplementation"(platform("org.junit:junit-bom:6.1.2"))
-    "testIntegrationImplementation"("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    "testIntegrationImplementation"("io.papermc.paper:paper-api:26.2.build.103-stable")
     "testIntegrationImplementation"("org.junit.jupiter:junit-jupiter")
     "testIntegrationImplementation"("org.mockito:mockito-core:5.23.0")
     "testIntegrationImplementation"("org.mockito.kotlin:mockito-kotlin:5.3.1")
