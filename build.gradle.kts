@@ -1,7 +1,7 @@
 plugins {
     kotlin("jvm") version "2.1.0"
     id("com.gradleup.shadow") version "9.6.1"
-    id("xyz.jpenilla.run-paper") version "2.3.1"
+    id("xyz.jpenilla.run-paper") version "3.0.2"
 }
 
 group = "com.mythossmp"
