@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     kotlin("jvm") version "2.4.10"
     id("com.gradleup.shadow") version "9.6.1"
@@ -90,11 +92,8 @@ java {
 
 kotlin {
     jvmToolchain(21)
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = "21"
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
