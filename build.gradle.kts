@@ -19,7 +19,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.11.0")
 
-    implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("com.zaxxer:HikariCP:7.1.0")
     implementation("org.xerial:sqlite-jdbc:3.53.2.1")
 
     compileOnly("net.kyori:adventure-api:4.17.0")
@@ -49,7 +49,7 @@ dependencies {
     "testIntegrationImplementation"("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.110.0") {
         exclude("org.junit.jupiter")
     }
-    "testIntegrationImplementation"("com.zaxxer:HikariCP:5.1.0")
+    "testIntegrationImplementation"("com.zaxxer:HikariCP:7.1.0")
     "testIntegrationImplementation"("org.xerial:sqlite-jdbc:3.53.2.1")
     "testIntegrationImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     "testIntegrationRuntimeOnly"("org.junit.platform:junit-platform-launcher")
