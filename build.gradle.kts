@@ -31,7 +31,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.2")
     testImplementation("org.mockito:mockito-core:5.23.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.23.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:6.3.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -47,7 +47,7 @@ dependencies {
     "testIntegrationImplementation"("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     "testIntegrationImplementation"("org.junit.jupiter:junit-jupiter")
     "testIntegrationImplementation"("org.mockito:mockito-core:5.23.0")
-    "testIntegrationImplementation"("org.mockito.kotlin:mockito-kotlin:5.3.1")
+    "testIntegrationImplementation"("org.mockito.kotlin:mockito-kotlin:6.3.0")
     "testIntegrationImplementation"("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.110.0") {
         exclude("org.junit.jupiter")
     }
