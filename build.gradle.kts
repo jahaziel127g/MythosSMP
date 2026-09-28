@@ -1,9 +1,9 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("jvm") version "2.4.10"
+    kotlin("jvm") version "2.4.20"
     id("com.gradleup.shadow") version "9.6.1"
-    id("xyz.jpenilla.run-paper") version "3.0.2"
+    id("xyz.jpenilla.run-paper") version "3.1.0"
 }
 
 group = "com.mythossmp"
@@ -17,20 +17,20 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.4.10")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.4.20")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.11.0")
 
     implementation("com.zaxxer:HikariCP:7.1.0")
-    implementation("org.xerial:sqlite-jdbc:3.53.2.1")
+    implementation("org.xerial:sqlite-jdbc:3.53.4.0")
 
     compileOnly("net.kyori:adventure-api:4.17.0")
     compileOnly("net.kyori:adventure-text-minimessage:4.17.0")
 
     testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.1.2")
-    testImplementation("org.mockito:mockito-core:5.23.0")
-    testImplementation("org.mockito:mockito-junit-jupiter:5.23.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
+    testImplementation("org.mockito:mockito-core:5.24.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.24.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
@@ -43,16 +43,16 @@ sourceSets {
 }
 
 dependencies {
-    "testIntegrationImplementation"(platform("org.junit:junit-bom:6.1.2"))
+    "testIntegrationImplementation"(platform("org.junit:junit-bom:6.1.3"))
     "testIntegrationImplementation"("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     "testIntegrationImplementation"("org.junit.jupiter:junit-jupiter")
-    "testIntegrationImplementation"("org.mockito:mockito-core:5.23.0")
+    "testIntegrationImplementation"("org.mockito:mockito-core:5.24.0")
     "testIntegrationImplementation"("org.mockito.kotlin:mockito-kotlin:5.3.1")
-    "testIntegrationImplementation"("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.110.0") {
+    "testIntegrationImplementation"("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.116.3") {
         exclude("org.junit.jupiter")
     }
     "testIntegrationImplementation"("com.zaxxer:HikariCP:7.1.0")
-    "testIntegrationImplementation"("org.xerial:sqlite-jdbc:3.53.2.1")
+    "testIntegrationImplementation"("org.xerial:sqlite-jdbc:3.53.4.0")
     "testIntegrationImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     "testIntegrationRuntimeOnly"("org.junit.platform:junit-platform-launcher")
 }
